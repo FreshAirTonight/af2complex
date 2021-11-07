@@ -5,5 +5,3 @@ __pycache__/
 *.bak
 *.npy
 *.png
-example/stats/
-example/cluspro_sets/
