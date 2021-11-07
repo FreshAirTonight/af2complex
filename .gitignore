@@ -1,0 +1,12 @@
+af_mod/
+af_mod_rec/
+__pycache__/
+*.py[cod]
+*.json
+*.pkl
+*.pdb
+*.bak
+*.npy
+*.png
+example/stats/
+example/cluspro_sets/
