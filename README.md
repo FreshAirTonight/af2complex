@@ -26,12 +26,12 @@ no additional package is required. If not, please follow its official installati
 models with the capability of TM-score prediction (pTM). Please note that DeepMind's latest 
 DL models re-trained for AlphaFold-multimer have not been tested and are not required.
 
-After you have set up AlphaFold 2, please clone this repository and follow the guide for examples
-below.
+After you have set up AlphaFold 2, please clone this repository and follow the guide to
+run examples as described below.
 
 ## Example
 
-Under the "example" directory, there are two CASP14 assembly targets as the examples. 
+Under the "example" directory, there are two CASP14 multimeric targets as the examples. 
 The goal is to predict the complex structures for these two targets,
 one heterodimer (A1:B1) and one heterotetramer (A2:B2). The input features have been
 generated for the individual protein sequences of these targets and placed under the
@@ -64,14 +64,14 @@ predict a complex structure made of these sequences, using the script ```run_af_
 The stoichiometry of your target, be it a monomer or a complex, is defined in an input list 
 file. In the example above, the file is `test.lst`. The general format of this file is 
 
-`A:2/B:2/C/D/D total_length target_name`
+`A:2/B:2/C/D/E total_length target_name`
 
 where the first column is the stoichiometry of the complex, using the names of the individual
-sequences, total_length is the total number of amino acids of the putative complex, and
-target_name is optional for naming the output subdirectory purpose. During a prediction,
-the program will look for input features of A, B, C, D under the input feature directory
-you supplied to the program. If you provide only one protein name, it reverts to a regular
-AF2 run.
+sequences (:num after each protein defines its homo copy number), total_length is the total number of amino 
+acids of the putative complex, and target_name is optional for naming the output subdirectory 
+purpose. During a prediction, the program will look for input features of A, B, C, D under the 
+input feature directory you supplied to the program. If you provide only one protein name, it 
+reverts to a regular AF2 run.
 
 ## Model relaxation
 Optionally, you may run the MD minimization to eliminate some clashes in the unrelaxed
