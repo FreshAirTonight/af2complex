@@ -2,7 +2,7 @@
 
 # You need to provide DATA_DIR and load_alphafold
 DATA_DIR=$HOME/scratch/afold/data ## change this to point to alphafold's DL parameter directory
-if [[ -r load_alphafold ]]; then
+if [[ -r $HOME/bin/load_alphafold ]]; then
   . load_alphafold  ## set up proper AlphaFold conda environment.
 fi
 
