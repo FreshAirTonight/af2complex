@@ -18,7 +18,7 @@ af_dir="$DATA_DIR/src"
 cd "$af_dir" || { echo 'Error: enter $af_dir failed' ; exit 1 ; }
 mkdir -p "$out_dir" || { echo 'Error: mkdir $out_dir failed' ; exit 1 ; }
 
-python -u $af_dir/run_alphafold_stage2b.py \
+python -u "$af_dir/run_alphafold_stage2b.py" \
   --target_lst_path="$target_lst_file" \
   --output_dir="$out_dir" \
   --feature_dir="$fea_dir"
