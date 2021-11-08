@@ -20,8 +20,8 @@ inference (stage 2a) and MD minimization (stage 2b).
 
 ## Installation
 
-If you have installed AlphaFold version 2.0.1, no additional package is required. If not,
-please follow its official installation guide of 
+If you have installed AlphaFold [version v2.0.1](https://github.com/deepmind/alphafold/releases/tag/v2.0.1), 
+no additional package is required. If not, please follow its official installation guide of 
 [AlphaFold 2](https://github.com/deepmind/alphafold) first. This package requires the deep learning 
 models with the capability of TM-score prediction (pTM). Please note that DeepMind's latest 
 DL models re-trained for AlphaFold-multimer have not been tested and are not required.
