@@ -47,8 +47,8 @@ path to the model parameters of AlphaFold 2 is pointed to.
 ./run_af_stage2a_comp.sh
 ```
 
-The output structural models are under the diretory `af_mod`. For the purpose of comparison, 
-the experimental structures of these two examples are under directory `ground_truth`.
+The output structural models are under the subdirectory `af_mod`. For the purpose of comparison, 
+the experimental structures of these two examples are under subdirectory `ground_truth`.
 
 ## Input feature generation
 If you apply this package to a new target. The first step is to generate input features for
