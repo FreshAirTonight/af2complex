@@ -2,16 +2,16 @@
 ## Predicting direct protein-protein interactions with deep learning
 
 This is an extension of [AlphaFold 2](https://github.com/deepmind/alphafold) generalized for 
-predicting strucural models of a protein complex. It is based on AlphaFold [version v2.0.1](https://github.com/deepmind/alphafold/releases/tag/v2.0.1) 
+predicting structural models of a protein complex. It is based on AlphaFold [version v2.0.1](https://github.com/deepmind/alphafold/releases/tag/v2.0.1) 
 released by DeepMind in July 2021. We added a few features useful for modeling protein complexes 
-that are not designed for but hidden in AF2's original release.
+that are not designed for it but are hidden in AF2's original release.
 
 ![Overview](image/af2complex_overview.jpg)
 
 ## Features
 
 - Predicting structural models of a protein complex, e.g., a homooligomer or heterooligomer.
-- No paired MSAs are not required for complex modeling
+- Paired MSAs are not required for complex modeling
 - New metrics for evaluating structural models of protein-protein interfaces
 - Option to save the intermediate models during recycles
 - Adding `genome`, `super`, `economy` presets
@@ -26,16 +26,16 @@ please follow its official installation guide of
 models with the capability of TM-score prediction (pTM). Please note that DeepMind's latest 
 DL models re-trained for AlphaFold-multimer have not been tested and are not required.
 
-After you have set up AlphaFold 2, please clone this repository and follow the guild provided
+After you have set up AlphaFold 2, please clone this repository and follow the guide provided
 under the "example" folder.
 
 ## Example
 
-Under the "example" directory, these are two CASP14 assembly targets as the examples. 
+Under the "example" directory, there are two CASP14 assembly targets as the examples. 
 The goal is to predict the complex structures for these two targets,
 one heterodimer (A1:B1) and one heterotetramer (A2:B2). The input features have been
 generated for the individual protein sequences of these targets. We use these input
-features of single chains to predict the structures of their complexe forms. Note that
+features of single chains to predict the structures of their complexes forms. Note that
 the input features were generated using databases released before the start date
 of CASP14.
 
@@ -71,7 +71,7 @@ to predict single chain or multi-chain (assembly) structures.
    If there are mutliple chains, they are named alphabetically starting from 'A'
 - `model_[1-5]_ptm_*.pkl`  Pickle file contains extra prediction from the DL model
 - `ranking_all.json` or `model_*.json` Information about the model, such as predicted scores.
-  By default, if it is complex predictioni, the models are ranked by the interface-score.
+  By default, if it is complex prediction, the models are ranked by the interface-score.
   For single chain, it is ranked by predicted TM-score.
 - `features.pkl` This is a pickle file conatining features for structure prediction (stage 2a).
   It is the output from the data pipeline by running the stage 1 script. 
