@@ -14,7 +14,7 @@ that are not designed for it but are hidden in AF2's original release.
 - Paired MSAs are not required for complex modeling
 - New metrics for evaluating structural models of protein-protein interfaces
 - Option to save the intermediate models during recycles
-- Adding `genome`, `super`, `economy` presets
+- Added `genome`, `super`, `economy` presets
 - Modularized workflow including data pipeline (stage 1), DL model 
 inference (stage 2a) and MD minimization (stage 2b).
 
