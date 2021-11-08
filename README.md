@@ -6,7 +6,7 @@ predicting structural models of a protein complex. It is based on AlphaFold [ver
 released by DeepMind in July 2021. We added a few features useful for modeling protein complexes 
 that are not explicitly intended for but hidden in AF2's original release.
 
-![Overview](image/af2complex_overview.jpg)
+<img src="image/af2complex_overview.jpg" alt="AF2Complex Overview" width="800"/>
 
 ## Features
 
