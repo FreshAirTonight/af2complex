@@ -27,7 +27,7 @@
 # Split feature generation (stage 1), DL inference (stage 2a), and model relaxation (stage 2b)
 #
 # Some other features such as option for dynamically controled number of recycles and
-# residue index breaks were taken from ColabFold
+# residue index breaks were taken from ColabFold (https://github.com/sokrypton/ColabFold)
 #
 # Mu Gao and Davi Nakajima An
 # Georgia Institute of Technology
