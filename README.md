@@ -4,11 +4,7 @@
 This is an extension of [AlphaFold 2](https://github.com/deepmind/alphafold) generalized for 
 predicting structural models of a protein complex. It is based on AlphaFold [version v2.0.1](https://github.com/deepmind/alphafold/releases/tag/v2.0.1) 
 released by DeepMind in July 2021. We added a few features useful for modeling protein complexes 
-<<<<<<< HEAD
 that are not designed for it but are hidden in AF2's original release.
-=======
-that are not designed for but are hidden in AF2's original release.
->>>>>>> c5650d36a6ffd5c421ed02d494a57f6cbd9a1447
 
 ![Overview](image/af2complex_overview.jpg)
 
