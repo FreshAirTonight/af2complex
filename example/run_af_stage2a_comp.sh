@@ -1,8 +1,10 @@
 #!/bin/bash
 
-# You need to take care of these two items
-#. load_alphafold  ## set up proper AlphaFold conda environment.
+# You need to provide DATA_DIR and load_alphafold
 DATA_DIR=$HOME/scratch/afold/data ## change this to point to alphafold's DL parameter directory
+if [[ -r load_alphafold ]]; then
+  . load_alphafold  ## set up proper AlphaFold conda environment.
+fi
 
 ### input targets
 target_lst_file=test.lst
