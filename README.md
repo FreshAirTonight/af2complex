@@ -4,7 +4,7 @@
 This is an extension of [AlphaFold 2](https://github.com/deepmind/alphafold) generalized for 
 predicting structural models of a protein complex. It is based on AlphaFold [version v2.0.1](https://github.com/deepmind/alphafold/releases/tag/v2.0.1) 
 released by DeepMind in July 2021. We added a few features useful for modeling protein complexes 
-that are not designed for it but are hidden in AF2's original release.
+that are not explicitly intended for but hidden in AF2's original release.
 
 ![Overview](image/af2complex_overview.jpg)
 
@@ -26,18 +26,18 @@ please follow its official installation guide of
 models with the capability of TM-score prediction (pTM). Please note that DeepMind's latest 
 DL models re-trained for AlphaFold-multimer have not been tested and are not required.
 
-After you have set up AlphaFold 2, please clone this repository and follow the guide provided
-under the "example" folder.
+After you have set up AlphaFold 2, please clone this repository and follow the guide for examples
+below.
 
 ## Example
 
 Under the "example" directory, there are two CASP14 assembly targets as the examples. 
 The goal is to predict the complex structures for these two targets,
 one heterodimer (A1:B1) and one heterotetramer (A2:B2). The input features have been
-generated for the individual protein sequences of these targets. We use these input
-features of single chains to predict the structures of their complexes forms. Note that
-the input features were generated using databases released before the start date
-of CASP14.
+generated for the individual protein sequences of these targets and placed under the
+subdirectory `af_fea`. We use these input features of single chains to predict the 
+structures of their complexes forms. Note that the input features were generated using 
+databases released before the start date of CASP14.
 
 Use `run_af_stage2a_comp.sh` shell script to run the examples. Be sure to modify it 
 such that that the correct conda environment for AlphaFold is loaded and the correct 
@@ -47,26 +47,37 @@ path to the model parameters of AlphaFold 2 is pointed to.
 ./run_af_stage2a_comp.sh
 ```
 
-For the purpose of evaluation, the experimental structures of these two examples are under
-directory `ground_truth`.
+The output structural models are under the diretory `af_mod`. For the purpose of comparison, 
+the experimental structures of these two examples are under directory `ground_truth`.
 
-### Input format
-The component(s) of your target, be it a monomer or a complex, is (are) defined
-in an input list file. The file is `test.lst` in the example above. The general format
-is 
+## Input feature generation
+If you apply this package to a new target. The first step is to generate input features for
+each individual (unique) protein sequences of your target using AF2's data pipeline. For
+convenience, we split the original AF2 workflow and provide a script ```run_af_stage1.py```
+for this purpose. This script will generate input for individual protein sequences, which 
+you may use to predict either a single chain (monomer) or multi-chain (complex) structures.
+You may skip this step if you already have `features.pkl` files generated for your target.
+
+## Complex structure prediction
+After you collected the features of individual protein sequences. You may use them to
+predict a complex structure made of these sequences, using the script ```run_af_stage2a_comp.py```.
+The stoichiometry of your target, be it a monomer or a complex, is defined in an input list 
+file. In the example above, the file is `test.lst`. The general format of this file is 
 
 `A:2/B:2/C/D/D total_length target_name`
 
 where the first column is the stoichiometry of the complex, using the names of the individual
 sequences, total_length is the total number of amino acids of the putative complex, and
-target_name is optional for naming the output subdirectory purpose.
+target_name is optional for naming the output subdirectory purpose. During a prediction,
+the program will look for input features of A, B, C, D under the input feature directory
+you supplied to the program. If you provide only one protein name, it reverts to a regular
+AF2 run.
 
-### Input feature generation
-If you need to generate feature inputs, check out the ```run_af_stage1.py```. This
-script will generate input for individual protein sequences, which you may use
-to predict single chain or multi-chain (assembly) structures.
+## Model relaxation
+Optionally, you may run the MD minimization to eliminate some clashes in the unrelaxed
+models obtained above, by running the script ```run_af_stage2b.py```.
 
-### Output files
+## Output files
 - `model_[1-5]_ptm_*.pdb`  Output structural (unreleaxed) models in the PDB format. 
    If there are mutliple chains, they are named alphabetically starting from 'A'
 - `model_[1-5]_ptm_*.pkl`  Pickle file contains extra prediction from the DL model
@@ -75,7 +86,10 @@ to predict single chain or multi-chain (assembly) structures.
   For single chain, it is ranked by predicted TM-score.
 - `features.pkl` This is a pickle file conatining features for structure prediction (stage 2a).
   It is the output from the data pipeline by running the stage 1 script. 
-- `unrelaxed_model_*.pdb` Relaxed structural models by running the stage 2b script.
+- `relaxed_model_*.pdb` Relaxed structural models by running the stage 2b script.
+- If you choose to save intermediate pdb files from recycling, the files will be under
+ a subdirectory named `recycled`.
+
 
 ## Reference
 - Predicting direct physical interactions in multimeric proteins with deep learning.
