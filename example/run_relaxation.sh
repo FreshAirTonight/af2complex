@@ -1,5 +1,8 @@
 #!/bin/bash
-. load_alphafold  ## set up proper AlphaFold conda environment.
+
+if [[ -r load_alphafold ]]; then
+  . load_alphafold  ## set up proper AlphaFold conda environment.
+fi
 
 ### input targets
 target_lst_file=/storage/home/hcoda1/5/gmu3/data/af2ppi/git/example/test.lst
