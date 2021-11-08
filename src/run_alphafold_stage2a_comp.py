@@ -26,7 +26,7 @@
 # Saving structure models of all recycles
 # Split feature generation (stage 1), DL inference (stage 2a), and model relaxation (stage 2b)
 #
-# The feature of dynamically controled number of recycles and the idea of 
+# The feature of dynamically controled number of recycles and the idea of
 # residue index breaks were taken from ColabFold (https://github.com/sokrypton/ColabFold)
 #
 # Mu Gao and Davi Nakajima An
