@@ -74,8 +74,9 @@ input feature directory you supplied to the program. If you provide only one pro
 reverts to a regular AF2 run.
 
 ## Model relaxation
-Optionally, you may run the MD minimization to eliminate some clashes in the unrelaxed
-models obtained above, by running the script ```run_af_stage2b.py```.
+Optionally, you may run a MD minimization to eliminate clashes (if exist) in unrelaxed
+models generated above to obtain so-called "relaxed" models. The script for this purpose
+is ```run_af_stage2b.py```. And a demo run is provided under the `example` directory. 
 
 ## Output files
 - `model_[1-5]_ptm_*.pdb`  Output structural (unreleaxed) models in the PDB format. 
