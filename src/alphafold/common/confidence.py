@@ -11,7 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+#
+# Modified to add predicted interface TM-score and Interface-score
+# Metrics for complex model evaluation
+#
+# Mu Gao and Davi Nakajima An
+# Georgia Institute of Technology
+#
 """Functions for processing confidence metrics."""
 
 from typing import Dict, Optional, Tuple, Union
