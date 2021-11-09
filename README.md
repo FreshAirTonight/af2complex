@@ -69,9 +69,11 @@ file. In the example above, the file is `test.lst`. The general format of this f
 where the first column is the stoichiometry of the complex, using the names of the individual
 sequences (:num after each protein defines its homo copy number), total_length is the total number of amino 
 acids of the putative complex, and target_name is optional for naming the output subdirectory 
-purpose. During a prediction, the program will look for input features of A, B, C, D under the 
-input feature directory you supplied to the program. If you provide only one protein name, it 
-reverts to a regular AF2 run.
+purpose. In the example above, the complex is maded of five protein sequences named A to E, and
+protein A and B each have two copies. During a prediction, the program will look for individual 
+input features of A to E under the input feature directory you supplied to the program, and then
+it joins them into a set of features for complex structure prediction. If you provide only a single 
+protein without a copy number, e.g., `A seq_length`, it reverts to a regular AF2 run.
 
 ## Model relaxation
 Optionally, you may run a MD minimization to eliminate clashes (if exist) in unrelaxed
