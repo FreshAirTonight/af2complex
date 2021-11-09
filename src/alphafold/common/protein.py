@@ -11,6 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# Modified for complex structure prediction
+# Mu Gao and Davi Nakajima An
+#
 
 """Protein data type."""
 import io
