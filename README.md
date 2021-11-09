@@ -79,13 +79,14 @@ models obtained above, by running the script ```run_af_stage2b.py```.
 
 ## Output files
 - `model_[1-5]_ptm_*.pdb`  Output structural (unreleaxed) models in the PDB format. 
-   If there are mutliple chains, they are named alphabetically starting from 'A'
-- `model_[1-5]_ptm_*.pkl`  Pickle file contains extra prediction from the DL model
+   If there are mutliple chains, they are named alphabetically starting from 'A'.
+- `model_[1-5]_ptm_*.pkl`  Pickle file contains extra information from the DL model.
 - `ranking_all.json` or `model_*.json` Information about the model, such as predicted scores.
-  By default, if it is complex prediction, the models are ranked by the interface-score.
-  For single chain, it is ranked by predicted TM-score.
-- `features.pkl` This is a pickle file conatining features for structure prediction (stage 2a).
-  It is the output from the data pipeline by running the stage 1 script. 
+  By default, if there are multiple complex model predictions, the models are ranked by 
+  their interface-scores. For single chain models or multipel chain models without interaction, 
+  they are ranked by predicted TM-score.
+- `features.pkl` This is a pickle file conatining features generated from the data pipeline 
+  by running the stage 1 script. It is employed for structure prediction in stage 2a. 
 - `relaxed_model_*.pdb` Relaxed structural models by running the stage 2b script.
 - If you choose to save intermediate pdb files from recycling, the files will be under
  a subdirectory named `recycled`.
