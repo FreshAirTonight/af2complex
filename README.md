@@ -4,7 +4,8 @@
 This is an extension of [AlphaFold 2](https://github.com/deepmind/alphafold) generalized for 
 predicting structural models of a protein complex. It is based on AlphaFold [version v2.0.1](https://github.com/deepmind/alphafold/releases/tag/v2.0.1) 
 released by DeepMind in July 2021. We added a few features useful for modeling protein complexes 
-that are not explicitly intended for but hidden in AF2's original release.
+that are not explicitly intended for but hidden in AF2's original release. This study
+is detailed in [a preprint](https://www.biorxiv.org/content/10.1101/2021.11.09.467949v1).
 
 <img src="image/af2complex_overview.jpg" alt="AF2Complex Overview" width="800"/>
 
@@ -98,6 +99,7 @@ is ```run_af_stage2b.py```. And a demo run is provided under the `example` direc
 ## Reference
 - Predicting direct physical interactions in multimeric proteins with deep learning.
 Mu Gao, Davi Nakajima An, Jerry M. Parks, and Jeffrey Skolnick. (2021)
+[BioRxiv preprint](https://www.biorxiv.org/content/10.1101/2021.11.09.467949v1).
 
 - Highly accurate protein structure prediction with AlphaFold.
 Jumper, J. et al., Nature 596, 583-589  (2021).
