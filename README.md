@@ -98,8 +98,8 @@ is ```run_af_stage2b.py```. And a demo run is provided under the `example` direc
 
 ## Reference
 - Predicting direct physical interactions in multimeric proteins with deep learning.
-Mu Gao, Davi Nakajima An, Jerry M. Parks, and Jeffrey Skolnick. (2021)
-[BioRxiv preprint](https://www.biorxiv.org/content/10.1101/2021.11.09.467949v1).
+Mu Gao, Davi Nakajima An, Jerry M. Parks, and Jeffrey Skolnick.
+[bioRxiv, 2021.11.09.467949v1](https://www.biorxiv.org/content/10.1101/2021.11.09.467949v1) (2001).
 
 - Highly accurate protein structure prediction with AlphaFold.
 Jumper, J. et al., Nature 596, 583-589  (2021).
