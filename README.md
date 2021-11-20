@@ -28,7 +28,8 @@ models with the capability of TM-score prediction (pTM). Please note that DeepMi
 DL models re-trained for AlphaFold-multimer have not been tested and are not required.
 
 After you have set up AlphaFold 2, please clone this repository and follow the guide to
-run examples as described below.
+run examples as described below. This installation step takes seconds or several minutes, dependent
+on your network speed.
 
 ## Example
 
@@ -50,6 +51,11 @@ path to the model parameters of AlphaFold 2 is pointed to.
 
 The output structural models are under the subdirectory `af_mod`. For the purpose of comparison, 
 the experimental structures of these two examples are under subdirectory `ground_truth`.
+
+The run time for a single model prediction is about two to five minutes on a workstation 
+equipped with an Nivida RTX6000 GPU. It is recommended to run these examples on a machine 
+with a modern GPU such as Nvidia RTX6000, P100, V100, or higher. We have not tested the 
+code on a CPU-only computer.
 
 ## Input feature generation
 If you apply this package to a new target. The first step is to generate input features for
@@ -109,6 +115,9 @@ Jumper, J. et al., Nature 596, 583-589  (2021).
 ## Data sets
 Data sets and predicted structural models described in the AF2Complex reference are 
 available at [the CSSB website at Georgia Tech](https://sites.gatech.edu/cssb/af2complex/).
+The data set include the input features, ground-truth structures, and sequences of the 
+CP17 benchmark test, tested E. coli protein pairs and their sequences, and 
+predicted top models of the E. coli pairs and the Ccm I assemblies.
 
 ## Licencse
 
