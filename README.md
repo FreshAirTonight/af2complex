@@ -4,8 +4,8 @@
 This is an extension of [AlphaFold 2](https://github.com/deepmind/alphafold) generalized for 
 predicting structural models of a protein complex. It is based on AlphaFold [version v2.0.1](https://github.com/deepmind/alphafold/releases/tag/v2.0.1) 
 released by DeepMind in July 2021. We added a few features useful for modeling protein complexes 
-that are not explicitly intended for but hidden in AF2's original release. This study
-is detailed in [a preprint](https://www.biorxiv.org/content/10.1101/2021.11.09.467949v1).
+that are not explicitly intended for but hidden in AF2's original release. Our study
+is detailed in [this preprint](https://www.biorxiv.org/content/10.1101/2021.11.09.467949v1).
 
 <img src="image/af2complex_overview.jpg" alt="AF2Complex Overview" width="800"/>
 
@@ -21,15 +21,19 @@ inference (stage 2a) and MD minimization (stage 2b).
 
 ## Installation
 
-If you have installed AlphaFold [version v2.0.1](https://github.com/deepmind/alphafold/releases/tag/v2.0.1), 
-no additional package is required. If not, please follow its official installation guide of 
-[AlphaFold 2](https://github.com/deepmind/alphafold) first. This package requires the deep learning 
-models with the capability of TM-score prediction (pTM). Please note that DeepMind's latest 
-DL models re-trained for AlphaFold-multimer have not been tested and are not required.
+This package has identical software dependency and hardware requirement as AlphaFold 
+[version v2.0.1](https://github.com/deepmind/alphafold/releases/tag/v2.0.1).
+If you have installed AlphaFold version v2.0.1, no additional software installation other 
+than this one is required. If not, please follow the official installation guide of 
+[AlphaFold 2](https://github.com/deepmind/alphafold) first. Running this package requires AF2's 
+deep learning models with the capability of TM-score prediction (pTM). In AF's release, these 
+models are named as `model_x_ptm.npz`. Please note that DeepMind's latest DL models re-trained 
+for AlphaFold-multimer (version 2.1.1) have not been tested and are not required. The 
+installation of AlphaFold 2 enviroment could take hours or a couple of days.
 
-After you have set up AlphaFold 2, please clone this repository and follow the guide to
-run examples as described below. This installation step takes seconds or several minutes, dependent
-on your network speed.
+After you have set up AlphaFold 2, please clone this repository and follow the guide below to
+run demo examples. The installation of this package itself takes only seconds or several 
+minutes, dependent on your network speed.
 
 ## Example
 
