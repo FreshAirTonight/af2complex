@@ -26,8 +26,8 @@
 # Saving structure models of all recycles
 # Split feature generation (stage 1), DL inference (stage 2a), and model relaxation (stage 2b)
 #
-# The feature of dynamically controled number of recycles and the idea of
-# residue index breaks were taken from ColabFold (https://github.com/sokrypton/ColabFold)
+# Some other features such as option for dynamically controled number of recycles and
+# residue index breaks were taken from ColabFold
 #
 # Mu Gao and Davi Nakajima An
 # Georgia Institute of Technology
@@ -103,8 +103,8 @@ flags.DEFINE_integer('save_recycled', 0, '0 - no recycle info saving, 1 - print 
 
 FLAGS = flags.FLAGS
 
-#MAX_TEMPLATE_HITS = 20
-MAX_MSA_DEPTH_MONO = 50000   ### maximum number of input sequences in the msa of a monomer
+MAX_TEMPLATE_HITS = 4
+MAX_MSA_DEPTH_MONO = 10000   ### maximum number of input sequences in the msa of a monomer
 
 ##################################################################################################
 # read either a single target string or a input list of targets in a file
@@ -200,6 +200,14 @@ def predict_structure(
           mono_feature_dict["msa"] = mono_feature_dict["msa"][:MAX_MSA_DEPTH_MONO,:]
           mono_feature_dict["deletion_matrix_int"] = mono_feature_dict["deletion_matrix_int"][:MAX_MSA_DEPTH_MONO,:]
           mono_feature_dict['num_alignments'][:] = MAX_MSA_DEPTH_MONO
+      if T > MAX_TEMPLATE_HITS:
+          print(f"Info: {seq_name} reducing the number of structural templates to {MAX_TEMPLATE_HITS}")
+          mono_feature_dict["template_aatype"] = mono_feature_dict["template_aatype"][:MAX_TEMPLATE_HITS,...]
+          mono_feature_dict["template_all_atom_masks"] = mono_feature_dict["template_all_atom_masks"][:MAX_TEMPLATE_HITS,...]
+          mono_feature_dict["template_all_atom_positions"] = mono_feature_dict["template_all_atom_positions"][:MAX_TEMPLATE_HITS,...]
+          mono_feature_dict["template_domain_names"] = mono_feature_dict["template_domain_names"][:MAX_TEMPLATE_HITS]
+          mono_feature_dict["template_sequence"] = mono_feature_dict["template_sequence"][:MAX_TEMPLATE_HITS]
+          mono_feature_dict["template_sum_probs"] = mono_feature_dict["template_sum_probs"][:MAX_TEMPLATE_HITS,:]
       feature_dicts.append( mono_feature_dict )
 
   # Make features for complex structure prediction using monomer structures if necessary
