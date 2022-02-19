@@ -57,7 +57,7 @@ The output structural models are under the subdirectory `af_mod`. For the purpos
 the experimental structures of these two examples are under subdirectory `ground_truth`.
 
 The run time for a single model prediction is about two to five minutes on a workstation 
-equipped with an Nivida RTX6000 GPU. It is recommended to run these examples on a machine 
+equipped with an Nvidia RTX6000 GPU. It is recommended to run these examples on a machine 
 with a modern GPU such as Nvidia RTX6000, P100, V100, or higher. We have not tested the 
 code on a CPU-only computer.
 
