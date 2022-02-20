@@ -23,9 +23,7 @@
 from typing import Dict, Optional, Tuple, Union
 import numpy as np
 import scipy.special
-import scipy.spatial
 
-import time
 
 def compute_plddt(logits: np.ndarray) -> np.ndarray:
   """Computes per-residue pLDDT from logits.
@@ -117,6 +115,65 @@ def compute_predicted_aligned_error(
 
 
 def predicted_tm_score(
+    logits: np.ndarray,
+    breaks: np.ndarray,
+    residue_weights: Optional[np.ndarray] = None,
+    asym_id: Optional[np.ndarray] = None,
+    interface: bool = False) -> np.ndarray:
+  """Computes predicted TM alignment or predicted interface TM alignment score.
+
+  Args:
+    logits: [num_res, num_res, num_bins] the logits output from
+      PredictedAlignedErrorHead.
+    breaks: [num_bins] the error bins.
+    residue_weights: [num_res] the per residue weights to use for the
+      expectation.
+    asym_id: [num_res] the asymmetric unit ID - the chain ID. Only needed for
+      ipTM calculation, i.e. when interface=True.
+    interface: If True, interface predicted TM score is computed.
+
+  Returns:
+    ptm_score: The predicted TM alignment or the predicted iTM score.
+  """
+
+  # residue_weights has to be in [0, 1], but can be floating-point, i.e. the
+  # exp. resolved head's probability.
+  if residue_weights is None:
+    residue_weights = np.ones(logits.shape[0])
+
+  bin_centers = _calculate_bin_centers(breaks)
+
+  num_res = int(np.sum(residue_weights))
+  # Clip num_res to avoid negative/undefined d0.
+  clipped_num_res = max(num_res, 19)
+
+  # Compute d_0(num_res) as defined by TM-score, eqn. (5) in Yang & Skolnick
+  # "Scoring function for automated assessment of protein structure template
+  # quality", 2004: http://zhanglab.ccmb.med.umich.edu/papers/2004_3.pdf
+  d0 = 1.24 * (clipped_num_res - 15) ** (1./3) - 1.8
+
+  # Convert logits to probs.
+  probs = scipy.special.softmax(logits, axis=-1)
+
+  # TM-Score term for every bin.
+  tm_per_bin = 1. / (1 + np.square(bin_centers) / np.square(d0))
+  # E_distances tm(distance).
+  predicted_tm_term = np.sum(probs * tm_per_bin, axis=-1)
+
+  pair_mask = np.ones(shape=(num_res, num_res), dtype=bool)
+  if interface:
+    pair_mask *= asym_id[:, None] != asym_id[None, :]
+
+  predicted_tm_term *= pair_mask
+
+  pair_residue_weights = pair_mask * (
+      residue_weights[None, :] * residue_weights[:, None])
+  normed_residue_mask = pair_residue_weights / (1e-8 + np.sum(
+      pair_residue_weights, axis=-1, keepdims=True))
+  per_alignment = np.sum(predicted_tm_term * normed_residue_mask, axis=-1)
+  return np.asarray(per_alignment[(per_alignment * residue_weights).argmax()])
+
+def predicted_tm_score_v1(
     logits: np.ndarray,
     breaks: np.ndarray,
     residue_weights: Optional[np.ndarray] = None,
@@ -219,7 +276,7 @@ def predicted_interface_tm_score(
 
   """
   # only calculate piTMS if a long gap detected, suggesting multi-chain target
-  if not residue_indices[-1]-residue_indices[0]-len(residue_indices) > 100:
+  if not np.abs(residue_indices[-1]-residue_indices[0]-len(residue_indices)) > 10:
     return {
       'score': np.asarray(0),
       'num_residues': np.asarray(0, dtype=np.int32),
@@ -229,7 +286,7 @@ def predicted_interface_tm_score(
   # Determine which chain each residue belongs to
   prev_id = np.roll(residue_indices, 1)
   diff = np.abs(residue_indices - prev_id)
-  chain_breaks = diff > 100
+  chain_breaks = diff > 10
   residue_chain_id = np.cumsum(chain_breaks)
 
   # calculates the minimum distance between each residue's heavy atoms
@@ -267,7 +324,7 @@ def predicted_interface_tm_score(
 
   # return the  piTM score and other interface data
   return {
-    'score': predicted_tm_score(logits, breaks, residue_weights,
+    'score': predicted_tm_score_v1(logits, breaks, residue_weights,
         is_probs=is_probs, inter_chain_mask=inter_chain_mask),
     'num_residues': np.asarray( residue_mask.sum() ),
     'num_contacts': np.asarray( contact_mask.sum() ),
@@ -309,7 +366,7 @@ def interface_score(
       "num_contacts" - number of contacts along the interface of protein complex
   """
    # only calculate the score if a long gap detected, suggesting multi-chain target
-  if not residue_indices[-1]-residue_indices[0]-len(residue_indices) > 100:
+  if not np.abs(residue_indices[-1]-residue_indices[0]-len(residue_indices)) > 10:
     return {
       'score': np.asarray(0),
       'num_residues': np.asarray(0, dtype=np.int32),
@@ -319,7 +376,7 @@ def interface_score(
   # Determine which chain each residue belongs to
   prev_id = np.roll(residue_indices, 1)
   diff = np.abs(residue_indices - prev_id)
-  chain_breaks = diff > 100
+  chain_breaks = diff > 10
   residue_chain_id = np.cumsum(chain_breaks)
 
   # calculates the minimum distance between each residue's heavy atoms
@@ -378,7 +435,7 @@ def interface_score(
     chain_mask = np.zeros(full_length, dtype=int)
     chain_mask[k_:k] = 1
 
-    sc = predicted_tm_score( logits, breaks, residue_weights,is_probs=is_probs,
+    sc = predicted_tm_score_v1( logits, breaks, residue_weights,is_probs=is_probs,
         chain_mask=chain_mask, inter_chain_mask=inter_chain_mask )
     #print(f'sc = {sc:.3f}')
     score += sc

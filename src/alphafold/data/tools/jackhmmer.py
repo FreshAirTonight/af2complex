@@ -192,7 +192,10 @@ class Jackhmmer:
 
         # Remove the local copy of the chunk
         os.remove(db_local_chunk(i))
-        future = next_future
+        # Do not set next_future for the last chunk so that this works even for
+        # databases with only 1 chunk.
+        if i < self.num_streamed_chunks:
+          future = next_future
         if self.streaming_callback:
           self.streaming_callback(i)
     return chunked_output

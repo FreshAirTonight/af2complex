@@ -17,7 +17,7 @@
 import glob
 import os
 import subprocess
-from typing import Any, Mapping, Optional, Sequence
+from typing import Any, List, Mapping, Optional, Sequence
 
 from absl import logging
 from alphafold.data.tools import utils
@@ -35,7 +35,7 @@ class HHBlits:
                *,
                binary_path: str,
                databases: Sequence[str],
-               n_cpu: int = 8,
+               n_cpu: int = 4,
                n_iter: int = 3,
                e_value: float = 0.001,
                maxseq: int = 1_000_000,
@@ -94,7 +94,7 @@ class HHBlits:
     self.p = p
     self.z = z
 
-  def query(self, input_fasta_path: str) -> Mapping[str, Any]:
+  def query(self, input_fasta_path: str) -> List[Mapping[str, Any]]:
     """Queries the database using HHblits."""
     with utils.tmpdir_manager() as query_tmp_dir:
       a3m_path = os.path.join(query_tmp_dir, 'output.a3m')
@@ -152,4 +152,4 @@ class HHBlits:
         stderr=stderr,
         n_iter=self.n_iter,
         e_value=self.e_value)
-    return raw_output
+    return [raw_output]

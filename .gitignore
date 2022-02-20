@@ -1,7 +1,10 @@
-af_mod/
-af_mod_rec/
+#af_mod/
+af2c_mod/
 __pycache__/
 *.py[cod]
+#*.json
+#*.pkl
+#*.pdb
 *.bak
 *.npy
 *.png
