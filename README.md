@@ -22,8 +22,8 @@ released by DeepMind in July 2021. After DeepMind released AlphaFold-Multimer [v
 - Metrics for evaluating structural models of protein-protein interfaces
 - Option to save the intermediate models during recycles
 - Added `genome`, `super`, `economy` presets
-- Modularized workflow including data pipeline (stage 1), DL model
-inference (stage 2) and MD minimization (stage 3).
+- Modularized workflow including feature generation, DL model
+inference and MD minimization.
 
 ## Installation
 
