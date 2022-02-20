@@ -80,7 +80,7 @@ where the residue ranges, 19 to 200 and 500 to 700, are taken out from A's full 
 
 ## Checkpoint
 
-To help tackle a large target on a limited computing resource, AF2Complex provides a checkpoint option in the model inference stage. An example usage is included in the example above. Note that the checkpoint is saved at the end of the all recycles done (due to a limitation imposed by Tensorflow). Therefore, to use this feature, one has to estimate beforehand how many recycles will be done before saving a checkpoint. Additionally, for a large target, it is recommended to turn off intermediate recycle output (by setting `save_recycled=0`) to save memory cost, and to use multiple short runs with the checkpoint option to get the intermediate recycle structures, e.g., every two, or three recycles.
+To help tackle a large target on a limited computing resource, AF2Complex provides a checkpoint option in the model inference stage. An example usage is included in the example above. Note that the checkpoint is saved at the end of the all recycles done (due to a limitation imposed by JAX). Therefore, to use this feature, one has to estimate beforehand how many recycles will be done before saving a checkpoint. Additionally, for a large target, it is recommended to turn off intermediate recycle output (by setting `save_recycled=0`) to save memory cost, and to use multiple short runs with the checkpoint option to get the intermediate recycle structures, e.g., every two, or three recycles.
 
 ## Model relaxation
 
