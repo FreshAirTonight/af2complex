@@ -15,7 +15,7 @@ released by DeepMind in July 2021. After DeepMind released AlphaFold-Multimer [v
 - Checkpoint option for model inference
 - Code refactoring
 
-#### version 1.0 (2021-11-09)
+#### Version 1.0 (2021-11-09)
 
 - Predicting structural models of a protein complex, e.g., a homooligomer or heterooligomer.
 - Paired MSAs are not required for complex modeling
