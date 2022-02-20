@@ -23,7 +23,7 @@ released by DeepMind in July 2021. After DeepMind released AlphaFold-Multimer [v
 - Option to save the intermediate models during recycles
 - Added `genome`, `super`, `economy` presets
 - Modularized workflow including data pipeline (stage 1), DL model
-inference (stage 2a) and MD minimization (stage 2b).
+inference (stage 2) and MD minimization (stage 3).
 
 ## Installation
 
