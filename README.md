@@ -105,7 +105,7 @@ This script will launch the relaxation protocol on all un-relaxed structural mod
 Mu Gao, Davi Nakajima An, Jerry M. Parks, and Jeffrey Skolnick.
 [bioRxiv, 2021.11.09.467949](https://doi.org/10.1101/2021.11.09.467949) (2021).
 
-- Proteome-scale deployment of protein structure prediction Workflows on the Summit Supercomputer.
+- Proteome-scale deployment of protein structure prediction workflows on the summit supercomputer.
 Mu Gao, Mark Coletti, et.al., [arXiv, 2201.10024](https://arxiv.org/abs/2201.10024) (2022).
 
 - Highly accurate protein structure prediction with AlphaFold.
