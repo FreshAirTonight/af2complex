@@ -49,7 +49,7 @@ such that that the correct conda environment for AlphaFold is loaded and the cor
 ./run_af2comp.sh
 ```
 
-The output structural models are under the subdirectory `af2c_mod`. By default, this run uses the `multimer_np` mode, which assembles input monomer features using unpaired MSAs and runs the `multimer_x_multimer` models for inference. You may also use test the `monomer_ptm` mode, which uses the original monomer DL modles and unpaired MSAs. For the purpose of comparison, the experimental structures of these two examples are under subdirectory `ground_truth`.
+The output structural models are under the subdirectory `af2c_mod`. By default, this run uses the `multimer_np` model preset, which assembles input monomer features using unpaired MSAs and applys the `multimer_x_multimer` models for inference. You may also use test the `monomer_ptm` model preset, which uses the original monomer DL modles and unpaired MSAs. For the purpose of comparison, the experimental structures of these two examples are under subdirectory `ground_truth`.
 
 The run time for a single model prediction is about two to five minutes on a workstation equipped with an Nvidia RTX6000 GPU. It is recommended to run these examples on a machine with a modern GPU such as Nvidia RTX6000, P100, V100, or higher. We have not tested the code on a CPU-only computer, but running these examples should not be a problem on a modern computer.
 
