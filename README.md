@@ -10,20 +10,19 @@ released by DeepMind in July 2021. After DeepMind released AlphaFold-Multimer [v
 
 #### Version 1.2 (2022-02-19)
 
-- Added supports to AF-Multimer neural network models, in both paired and unpaired MSAs modes
-- Domain cropping from pre-generated full monomer features (in unpaired MSAs mode only)
+- Added support to AF-Multimer neural network models in both paired and unpaired MSAs modes
+- Domain cropping pre-generated full monomer features (in unpaired MSAs mode only)
 - Checkpoint option for model inference
-- Code refactoring
+- Refactored code
 
 #### Version 1.0 (2021-11-09)
 
 - Predicting structural models of a protein complex
-- Paired MSAs are not required for complex modeling
+- Paired MSAs not required for complex modeling
 - Metrics for evaluating structural models of protein-protein interfaces
 - Option to save the intermediate models during recycles
 - Added `genome`, `super`, `economy` presets
-- Modularized workflow including feature generation, DL model
-inference and MD minimization
+- Modularized workflow including feature generation, DL model inference and MD minimization
 
 ## Installation
 
