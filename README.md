@@ -76,7 +76,7 @@ A more advanced example of using domain cropping feature is like the follows
 
 `A|19-200;500-700:2/B/C 567 A2BC`
 
-where the residue ranges, 19 to 200 and 500 to 700, are taken out from A's full length input features for modeling A2BC, composed of two copies of A, single copy of B and C, and with a total size of 567 AAs. This format allows convenient and rapid tests of part of a large sequence, and also avoid possible errors of using a partial sequence to derive MSAs.
+where the residue ranges, 19 to 200 and 500 to 700, are taken out from A's full length input features for modeling A2BC, composed of two copies of A, single copy of B and C, and with a total size of 567 AAs. This format allows convenient and rapid tests of part of a large sequence, and also avoid possible errors caused by using a partial sequence to derive MSAs.
 
 ## Checkpoint
 
