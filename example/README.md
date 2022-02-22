@@ -19,4 +19,4 @@ Run the script with the command,
 - `af_mod`  Examples of output models
 - `af2c_mod` Output directory created by running the `run_af2comp.sh` script.
 - `run_relaxation.sh` An example shell script of model relaxation.
-- `run_fea_gen.sh` An example shell script of input feature generation.
+- `run_fea_gen.sh` An example shell script of input feature generation. You need to install all third-party sequence tools and libraries, and modify this script accordingly.
