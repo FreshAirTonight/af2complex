@@ -70,7 +70,7 @@ where the first column defines the stoichiometry of the complex, e.g., `A:2/B:2/
 
 In the example target above, the complex is made of five protein sequences named A to E, and protein A and B each have two copies. During a prediction, the program will look for individual input features of A to E under the input feature directory, e.g, `$inp_dir/A/features.pkl`, and then assemble them into the features for complex structure prediction. If you provide only a single protein without a copy number, e.g., `A <seq_length>`, it reverts to a structural prediction of a single protein A.
 
-A more advanced example of using domain cropping feature is like the follows
+A more advanced example of using the domain cropping feature is like the follows
 
 `A|19-200;500-700:2/B/C 1788 A2BC`
 
