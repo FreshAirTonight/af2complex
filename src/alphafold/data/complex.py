@@ -346,6 +346,8 @@ def proc_mono_feats_for_af2mult(target: Dict, flags):
 
     feature_dict = feature_processing.process_final_af2complex(new_feature_dict)
     feature_dict = _correct_post_merged_feats_af2complex(feature_dict, monomers)
+    feature_dict['pdb_residue_index'] = new_feature_dict['pdb_residue_index']
+    #feature_dict['pdb_chain_index'] = new_feature_dict['pdb_chain_index']
     num_seq = feature_dict['msa'].shape[0]
     if num_seq < 512:
       feature_dict = pipeline_multimer.pad_msa(feature_dict, 512)

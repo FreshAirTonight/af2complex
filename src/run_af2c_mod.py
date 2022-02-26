@@ -354,7 +354,10 @@ def predict_structure(
 
           unrelaxed_pdb_path = os.path.join(out_dir, f'{log_model_name}.pdb')
           with open(unrelaxed_pdb_path, 'w') as f:
-            f.write(protein.to_pdb(unrelaxed_protein, is_multimer))
+            if flags.model_preset == 'multimer':
+                f.write(protein.to_pdb(unrelaxed_protein, is_multimer))
+            else:
+                f.write(protein.to_pdb(unrelaxed_protein, not is_multimer))
 
     # output info of intermeidate recycles and save the coordinates
     if FLAGS.save_recycled:

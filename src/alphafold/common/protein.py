@@ -330,19 +330,16 @@ def from_prediction(
       residue_indices = _maybe_remove_leading_dim(features['residue_index'])
       aatype=_maybe_remove_leading_dim(features['aatype'])
     else:
-      residue_indices = features['residue_index']
+      if 'pdb_residue_index' in features:
+          residue_indices = features['pdb_residue_index']
+      else:
+          residue_indices = features['residue_index']
       aatype = features['aatype']
       if aatype.ndim == 2:
           aatype = np.argmax(aatype, axis=1) # from 2d one-hot to 1d array
 
-    if 'asym_id' in features:
-      chain_index = _maybe_remove_leading_dim(features['asym_id'])
-    else:
-      #chain_index = np.zeros_like(_maybe_remove_leading_dim(features['aatype']))
-      prev_id = np.roll(residue_indices, 1)
-      diff = np.abs(residue_indices - prev_id)
-      chain_breaks = diff > 100  # detect our chain breaks
-      chain_index = np.cumsum(chain_breaks) - 1
+    chain_index = _maybe_remove_leading_dim(features['asym_id'])
+
   else:
     aatype = np.argmax(features['aatype'], axis=1) # from 2d one-hot to 1d array
     residue_indices = features['pdb_residue_index']
