@@ -197,6 +197,7 @@ def get_mono_chain(monomers, Ls):
   return chains
 ##################################################################################################
 
+##################################################################################################
 def make_complex_features(target, flags):
   if flags.model_preset == "multimer_np":
     return proc_mono_feats_for_af2mult(target, flags)
@@ -655,18 +656,25 @@ def template_cropping_and_joining_mono(curr_input):
       features = extract_template_domain_mono(mono_entry)
 
       copy_num = mono_entry['copy_number']
-      num_res = features['template_aatype'].shape[1]
+      #num_res = features['template_aatype'].shape[1]
+      num_res = features['msa'].shape[1]
       num_tem = len(features['template_domain_names'])
+
+      if num_tem == 0:
+          dom_fea = initialize_template_feats(1, num_res, is_multimer=False)
+      else:
+          dom_fea = features
+
       for i in range(copy_num):
         col_ = col + num_res
         row_ = row + num_tem
-        if num_tem > 0:
-          new_tem['template_all_atom_positions'][row:row_,col:col_,...] = features['template_all_atom_positions']
-          new_tem['template_domain_names'][row:row_] = features['template_domain_names']
-          new_tem['template_sequence'][row:row_]  = features['template_sequence']
-          new_tem['template_sum_probs'][row:row_] = features['template_sum_probs']
-          new_tem['template_aatype'][row:row_,col:col_,:] = features['template_aatype']
-          new_tem['template_all_atom_masks'][row:row_,col:col_,:] = features['template_all_atom_masks']
+
+        new_tem['template_all_atom_positions'][row:row_,col:col_,...] = dom_fea['template_all_atom_positions']
+        new_tem['template_domain_names'][row:row_] = dom_fea['template_domain_names']
+        new_tem['template_sequence'][row:row_]  = dom_fea['template_sequence']
+        new_tem['template_sum_probs'][row:row_] = dom_fea['template_sum_probs']
+        new_tem['template_aatype'][row:row_,col:col_,:] = dom_fea['template_aatype']
+        new_tem['template_all_atom_masks'][row:row_,col:col_,:] = dom_fea['template_all_atom_masks']
         col = col_; row = row_
     new_feature_dict.update(new_tem)
 
@@ -695,26 +703,35 @@ def template_cropping_and_joining_mult(curr_input):
 
   col = 0; row = 0
   if not flags.no_template:
-    new_tem = initialize_template_feats(full_num_tem, full_num_res, True)
+    new_tem = initialize_template_feats(full_num_tem, full_num_res, is_multimer=True)
     for mono_entry in monomers:
       features = extract_template_domain_mult(mono_entry)
       copy_num = mono_entry['copy_number']
 
-      num_res = features['template_aatype'].shape[1]
+      #num_res = features['template_aatype'].shape[1]
+      num_res = features['msa'].shape[1]
       num_tem = len(features['template_domain_names'])
+      if num_tem == 0:
+        dom_fea = initialize_template_feats(1, num_res, is_multimer=True)
+        dom_fea['asym_id'] = features['asym_id']
+        dom_fea['sym_id']  = features['sym_id']
+        dom_fea['entity_id'] = features['entity_id']
+      else:
+        dom_fea = features
+
       for i in range(copy_num):
         col_ = col + num_res
         row_ = row + num_tem
-        if num_tem > 0:
-          new_tem['template_all_atom_positions'][row:row_,col:col_,...] = features['template_all_atom_positions']
-          new_tem['template_domain_names'][row:row_] = features['template_domain_names']
-          new_tem['template_sequence'][row:row_]  = features['template_sequence']
-          new_tem['template_sum_probs'][row:row_] = features['template_sum_probs']
-          new_tem['template_all_atom_mask'][row:row_,col:col_,:] = features['template_all_atom_mask']
-          new_tem['template_aatype'][row:row_,col:col_] = features['template_aatype']
-          new_tem['asym_id'][col:col_] = features['asym_id']
-          new_tem['sym_id'][col:col_] = features['sym_id']
-          new_tem['entity_id'][col:col_] = features['entity_id']
+
+        new_tem['template_all_atom_positions'][row:row_,col:col_,...] = dom_fea['template_all_atom_positions']
+        new_tem['template_domain_names'][row:row_] = dom_fea['template_domain_names']
+        new_tem['template_sequence'][row:row_]  = dom_fea['template_sequence']
+        new_tem['template_sum_probs'][row:row_] = dom_fea['template_sum_probs']
+        new_tem['template_all_atom_mask'][row:row_,col:col_,:] = dom_fea['template_all_atom_mask']
+        new_tem['template_aatype'][row:row_,col:col_] = dom_fea['template_aatype']
+        new_tem['asym_id'][col:col_] = dom_fea['asym_id']
+        new_tem['sym_id'][col:col_] = dom_fea['sym_id']
+        new_tem['entity_id'][col:col_] = dom_fea['entity_id']
 
         col = col_; row = row_
     new_feature_dict.update(new_tem)
