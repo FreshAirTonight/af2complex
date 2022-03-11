@@ -4,7 +4,7 @@
 The main script for the example is the shell script `run_af2comp.sh`.
 First, use a text editor to open this script, and modify it to provide the correct
 python environment of AlphaFold, if not already loaded. Then, provide the correct path to the parameter files of AlphaFold neural network
-models. In AF's releases, these models are named as `model_x_ptm.npz` or `model_x_multimer.npz`. Note that AlphaFold-Multimer's models (version 2.1.1) are not required if you only wish to run the original monomer DL models.
+models. In AF's releases, these models are named as `params_model_x_ptm.npz` (AF version 2.0.x), `params_model_x_multimer.npz` (AF version 2.1.x), `params_model_x_multimer_v2.npz` (AF version 2.2.x). Note that AlphaFold-Multimer's models are not required if you only wish to run the original monomer DL models.
 
 Run the script with the command,
 ```sh
