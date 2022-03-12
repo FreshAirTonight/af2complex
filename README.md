@@ -123,7 +123,7 @@ Evans, R. et al. bioRxiv, 2021.10.04.463034 (2021).
 
 ## Data sets and pre-generated input features
 
-Benchmark data sets used for benchmarking AF2Complex and the top computational models of E. coli Ccm system I are available at [Zenodo](https://doi.org/10.5281/zenodo.6084186).
+Benchmark data sets used for benchmarking AF2Complex and the top computational models of *E. coli* Ccm system I are available at [Zenodo](https://doi.org/10.5281/zenodo.6084186).
 
 Pre-generated input features of the full *E. coli* proteome are also provided in the same depository. You are welcome to use these features to predict the interactions among any *E. coli* proteins of your choice, or the whole interactome! If you use the data set and code, please cite [our work](https://doi.org/10.1101/2021.11.09.467949).
 
