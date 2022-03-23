@@ -15,7 +15,7 @@ from absl import flags
 from alphafold.relax  import relax
 from alphafold.common import protein
 
-from run_alphafold_stage2a_mult import _read_target_file, FLAGS
+from run_af2c_mod import _read_target_file, FLAGS
 
 import numpy as np
 
