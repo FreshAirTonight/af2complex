@@ -4,7 +4,7 @@
 Accurate descriptions of protein-protein interactions are essential for understanding biological systems. Can we predict protein-protein interactions given an arbitrary pair of protein sequences, and more generally, can it identify higher order protein complexes? AF2Complex was born to address this question by taking advantage of [AlphaFold](https://github.com/deepmind/alphafold), sophisticated neural network models originally designed for predicting structural models of single protein sequences by DeepMind. We extended it not only to model protein-protein interactions, but also to predict possible interactions among multiple proteins by using the confidence of the predicted structural models, including transient interactions that are difficult to capture experimentally.
 
 In a nutshell, AF2Complex is an enhanced version of AlphaFold with many features useful for real-world application scenarios, especially for the prediction of a protein complex, either on a personal computer or a supercomputer. Its initial development is based on AlphaFold [version v2.0.1](https://github.com/deepmind/alphafold/releases/tag/v2.0.1),
-released by DeepMind in July 2021. After DeepMind released AlphaFold-Multimer [version v2.1.1](https://github.com/deepmind/alphafold/releases/tag/v2.1.1) in November 2021, AF2Complex has been updated to support the multimer deep learning models of AlphaFold. Details of our development, including large-scale  performance evaluations and exemplary applications, have been described in [this work](https://www.biorxiv.org/content/10.1101/2021.11.09.467949v1).
+released by DeepMind in July 2021. After DeepMind released AlphaFold-Multimer [version v2.1.1](https://github.com/deepmind/alphafold/releases/tag/v2.1.1) in November 2021, AF2Complex has been updated to support the multimer deep learning models of AlphaFold. Details of our development, including large-scale  performance evaluations and exemplary applications, have been described in [this publication](https://www.nature.com/articles/s41467-022-29394-2).
 
 ## Updates and Features
 
@@ -108,10 +108,10 @@ This script will launch the relaxation protocol on all un-relaxed structural mod
 
 - Predicting direct physical interactions in multimeric proteins with deep learning.
 Mu Gao, Davi Nakajima An, Jerry M. Parks, and Jeffrey Skolnick.
-[bioRxiv, 2021.11.09.467949](https://doi.org/10.1101/2021.11.09.467949) (2021).
+[Nature Communications **13**:1744](https://www.nature.com/articles/s41467-022-29394-2) (2022).
 
 - Proteome-scale deployment of protein structure prediction workflows on the Summit supercomputer.
-Mu Gao, Mark Coletti, et.al., [arXiv, 2201.10024](https://arxiv.org/abs/2201.10024) (2022).
+Mu Gao, Mark Coletti, et.al., HiCOMB 2022, [arXiv, 2201.10024](https://arxiv.org/abs/2201.10024) (2022).
 
 - Highly accurate protein structure prediction with AlphaFold.
 Jumper, J. et al., Nature 596, 583-589  (2021).
