@@ -67,11 +67,11 @@ For the purpose of efficient computing, we have created a staged AF2 workflow an
 
 ## Target syntax
 
-After collecting the input features, you may use them to predict a complex structure, using the script ```run_af2c_mod.py```, which runs through the deep learning model inference step. The stoichiometry of your target, be it a monomer or a complex, is defined in an input list file. In the example we provided, the target list file is named `test.lst`. The general format of a target is as the follows,
+After collecting the input features of monomers, you may use them to predict a complex structure, using the script ```run_af2c_mod.py```, which runs through the process of deep learning model inference. The stoichiometry of your target, be it a monomer or a complex, is defined in an input list file. In the example we provided, the target list file is named `test.lst`. The general format of a target is as the follows,
 
 `A:2/B:2/C/D/E <total_length> <target_name>`
 
-where the first column defines the stoichiometry of the complex, e.g., `A:2/B:2/C/D/E`, using the IDs of the individual sequences, `:<num>` after each protein defines its homo copy number, and `/` to separate distinct monomers. The second column, `<total_length>`, is the total number of amino acids of the putative complex. This is mainly for load-balance in a large-scale cluster run, parsed but not used by the model inference python script. The third column, `<target_name>`, is the name of the output sub-directory.
+where the first column defines the stoichiometry of the complex, e.g., `A:2/B:2/C/D/E`, using the IDs of the individual sequences, `:<num>` after each protein defines its homo copy number, and `/` to separate distinct monomers. The IDs of monomers are also used as the name of sub-directory for locating their input features.  The second column, `<total_length>`, is the total number of amino acids of the putative complex. This is mainly for load-balance in a large-scale run on a computing cluster, and it is parsed but not used by the model inference python script. The third column, `<target_name>`, is the name of the sub-directory for placing predicted structural models.
 
 In the example target above, the complex is made of five protein sequences named A to E, and protein A and B each have two copies. During a prediction, the program will look for individual input features of A to E under the input feature directory, e.g, `$inp_dir/A/features.pkl`, and then assemble them into the features for complex structure prediction. If you provide only a single protein without a copy number, e.g., `A <seq_length>`, it reverts to a structural prediction of a single protein A.
 
@@ -125,7 +125,7 @@ Evans, R. et al. bioRxiv, 2021.10.04.463034 (2021).
 
 Benchmark data sets used for benchmarking AF2Complex and the top computational models of *E. coli* Ccm system I are available at [Zenodo](https://doi.org/10.5281/zenodo.6084186).
 
-Pre-generated input features of the full *E. coli* proteome are also provided in the same depository. You are welcome to use these features to predict the interactions among any *E. coli* proteins of your choice, or the whole interactome! If you use the data set and code, please cite [our work](https://doi.org/10.1101/2021.11.09.467949).
+Pre-generated input features of the full *E. coli* proteome are also provided in the same depository. You are welcome to use these features to predict the interactions among any *E. coli* proteins of your choice, or the whole interactome! If you use the data set and code, please cite [our work](https://www.nature.com/articles/s41467-022-29394-2).
 
 ## Acknowledgment
 
