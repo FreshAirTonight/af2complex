@@ -106,7 +106,7 @@ This script will launch the relaxation protocol on all un-relaxed structural mod
 
 ## Reference
 
-- Predicting direct physical interactions in multimeric proteins with deep learning.
+- AF2Complex predicts direct physical interactions in multimeric proteins with deep learning.
 Mu Gao, Davi Nakajima An, Jerry M. Parks, and Jeffrey Skolnick.
 [Nature Communications **13**:1744](https://www.nature.com/articles/s41467-022-29394-2) (2022).
 
