@@ -135,7 +135,7 @@ We thank DeepMind for their open-sourced AlphaFold development.
 
 This work was funded in part by the Office of Biological and Environmental Research of the Department of Energy, and the Division of General Medical Sciences of the National Institute Health. The research used resources supported in part by the Director’s Discretion Project at the Oak Ridge Leadership Computing Facility, and the Advanced Scientific Computing Research (ASCR) Leadership Computing Challenge (ALCC) program. We also acknowledge the computing resources provided by the Partnership for an Advanced Computing Environment (PACE) at the Georgia Institute of Technology.
 
-## Licencse
+## License
 
 The source code is licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of [the License](https://www.apache.org/licenses/LICENSE-2.0).
 
