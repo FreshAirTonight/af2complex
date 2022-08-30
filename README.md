@@ -13,7 +13,7 @@ You may test run AF2Complex or explore protein-protein interactions within the *
 
 ## Updates and Features
 
-#### Version 1.3.0 (2022-08-xx)
+#### Version 1.3.0 (2022-08-30)
 
 - Google Colab notebook access
 - Added multiple MSA pairing options
