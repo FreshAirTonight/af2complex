@@ -8,8 +8,8 @@
 DATA_DIR=$HOME/scratch/afold/data ## change this to point to alphafold's DL parameter directory
 
 ### input targets
-target_lst_file=test.lst  # a list of target with stoichiometry
-fea_dir=af_fea   # directory to input feature pickle files
+target_lst_file=targets/test.lst  # a list of target with stoichiometry
+fea_dir=af2c_fea   # directory to input feature pickle files
 out_dir=af2c_mod # model output directory, $out_dir/$target
 
 ### run preset, note this is different from model_preset defined below

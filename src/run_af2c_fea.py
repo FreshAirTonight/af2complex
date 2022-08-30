@@ -14,8 +14,13 @@
 #
 # Run data pipeline to generate input features for alphafold, save the features
 # This is a modification of DeepMind's run_alphafold.py
+#
+# Input: protein sequence(s)
+# Outpt: feature pickle file for deep learning model inference (run_af2c_mod.py)
+#
 # Mu Gao and Davi Nakajima An
-
+# Georgia Institute of Technology, 2021-2022
+#
 """Full AlphaFold protein structure prediction script."""
 import json
 import os
@@ -54,13 +59,6 @@ flags.DEFINE_list(
     'multiple sequences, then it will be folded as a multimer. Paths should be '
     'separated by commas. All FASTA paths must have a unique basename as the '
     'basename is used to name the output directories for each prediction.')
-flags.DEFINE_list(
-    'is_prokaryote_list', None, 'Optional for multimer system, not used by the '
-    'single chain system. This list should contain a boolean for each fasta '
-    'specifying true where the target complex is from a prokaryote, and false '
-    'where it is not, or where the origin is unknown. These values determine '
-    'the pairing method for the MSA.')
-
 flags.DEFINE_string('data_dir', None, 'Path to directory of supporting data.')
 flags.DEFINE_string('output_dir', None, 'Path to a directory that will '
                     'store the results.')
@@ -99,20 +97,16 @@ flags.DEFINE_string('max_template_date', None, 'Maximum template release date '
 flags.DEFINE_string('obsolete_pdbs_path', None, 'Path to file containing a '
                     'mapping from obsolete PDB IDs to the PDB IDs of their '
                     'replacements.')
-flags.DEFINE_enum('db_preset', 'full_dbs',
+flags.DEFINE_enum('db_preset', 'reduced_dbs',
                   ['full_dbs', 'reduced_dbs'],
                   'Choose preset MSA database configuration - '
                   'smaller genetic database config (reduced_dbs) or '
                   'full genetic database config  (full_dbs)')
-flags.DEFINE_enum('model_preset', 'monomer_ptm',
-                  ['monomer', 'monomer_casp14', 'monomer_ptm', 'multimer'],
-                  'Choose preset model configuration - the monomer model, '
-                  'the monomer model with extra ensembling, monomer model with '
-                  'pTM head, or multimer model')
-flags.DEFINE_boolean('benchmark', False, 'Run multiple JAX model evaluations '
-                     'to obtain a timing that excludes the compilation time, '
-                     'which should be more indicative of the time required for '
-                     'inferencing many proteins.')
+flags.DEFINE_enum('feature_mode', 'monomer',
+                  ['monomer', 'monomer+species', 'multimer'],
+                  'Choose the mode of output feature sets - for monomer prediction, '
+                  'monomer plus species ids (for customized pairing later), and '
+                  'for multimer prediction using the default MSA pairing')
 flags.DEFINE_integer('random_seed', None, 'The random seed for the data '
                      'pipeline. By default, this is randomly generated. Note '
                      'that even if this is set, Alphafold may still not be '
@@ -136,16 +130,13 @@ def _check_flag(flag_name: str,
                      f'"--{other_flag_name}={FLAGS[other_flag_name].value}".')
 
 
+
 def predict_structure(
     fasta_path: str,
     fasta_name: str,
     output_dir_base: str,
     data_pipeline: Union[pipeline.DataPipeline, pipeline_multimer.DataPipeline],
-    #model_runners: Dict[str, model.RunModel],
-    #amber_relaxer: relax.AmberRelaxation,
-    #benchmark: bool,
-    random_seed: int,
-    is_prokaryote: Optional[bool] = None):
+    random_seed: int):
   """Predicts structure using AlphaFold for the given sequence."""
   logging.info('Predicting %s', fasta_name)
   timings = {}
@@ -158,15 +149,9 @@ def predict_structure(
 
   # Get features.
   t_0 = time.time()
-  if is_prokaryote is None:
-    feature_dict = data_pipeline.process(
-        input_fasta_path=fasta_path,
-        msa_output_dir=msa_output_dir)
-  else:
-    feature_dict = data_pipeline.process(
-        input_fasta_path=fasta_path,
-        msa_output_dir=msa_output_dir,
-        is_prokaryote=is_prokaryote)
+  feature_dict = data_pipeline.process(
+      input_fasta_path=fasta_path,
+      msa_output_dir=msa_output_dir)
   timings['features'] = time.time() - t_0
 
   # Write out features as a pickled dictionary.
@@ -178,6 +163,13 @@ def predict_structure(
   timings_output_path = os.path.join(output_dir, 'timings_fea.json')
   with open(timings_output_path, 'w') as f:
     f.write(json.dumps(timings, indent=4))
+
+  # clear memory
+  del feature_dict
+  del timings
+
+
+
 
 
 def main(argv):
@@ -198,39 +190,21 @@ def main(argv):
   _check_flag('uniclust30_database_path', 'db_preset',
               should_be_set=not use_small_bfd)
 
-  run_multimer_system = 'multimer' in FLAGS.model_preset
-  _check_flag('pdb70_database_path', 'model_preset',
+  run_multimer_system = 'multimer' in FLAGS.feature_mode
+  add_species = 'species' in FLAGS.feature_mode
+  print(f"add_species is {add_species}")
+  _check_flag('pdb70_database_path', 'feature_mode',
               should_be_set=not run_multimer_system)
-  _check_flag('pdb_seqres_database_path', 'model_preset',
+  _check_flag('pdb_seqres_database_path', 'feature_mode',
               should_be_set=run_multimer_system)
-  _check_flag('uniprot_database_path', 'model_preset',
-              should_be_set=run_multimer_system)
-
-  if FLAGS.model_preset == 'monomer_casp14':
-    num_ensemble = 8
-  else:
-    num_ensemble = 1
+  _check_flag('uniprot_database_path', 'feature_mode',
+         should_be_set=(run_multimer_system or add_species))
 
   # Check for duplicate FASTA file names.
   fasta_names = [pathlib.Path(p).stem for p in FLAGS.fasta_paths]
   if len(fasta_names) != len(set(fasta_names)):
     raise ValueError('All FASTA paths must have a unique basename.')
 
-  # Check that is_prokaryote_list has same number of elements as fasta_paths,
-  # and convert to bool.
-  if FLAGS.is_prokaryote_list:
-    if len(FLAGS.is_prokaryote_list) != len(FLAGS.fasta_paths):
-      raise ValueError('--is_prokaryote_list must either be omitted or match '
-                       'length of --fasta_paths.')
-    is_prokaryote_list = []
-    for s in FLAGS.is_prokaryote_list:
-      if s in ('true', 'false'):
-        is_prokaryote_list.append(s == 'true')
-      else:
-        raise ValueError('--is_prokaryote_list must contain comma separated '
-                         'true or false values.')
-  else:  # Default is_prokaryote to False.
-    is_prokaryote_list = [False] * len(fasta_names)
 
   if run_multimer_system:
     template_searcher = hmmsearch.Hmmsearch(
@@ -256,10 +230,16 @@ def main(argv):
         release_dates_path=None,
         obsolete_pdbs_path=FLAGS.obsolete_pdbs_path)
 
+  # if add_species:
+  #   mono_uniprot_database_path = FLAGS.uniprot_database_path
+  # else:
+  #   mono_uniprot_database_path = FLAGS.uniref90_database_path
+
   monomer_data_pipeline = pipeline.DataPipeline(
       jackhmmer_binary_path=FLAGS.jackhmmer_binary_path,
       hhblits_binary_path=FLAGS.hhblits_binary_path,
       uniref90_database_path=FLAGS.uniref90_database_path,
+      uniprot_database_path=FLAGS.uniprot_database_path,
       mgnify_database_path=FLAGS.mgnify_database_path,
       bfd_database_path=FLAGS.bfd_database_path,
       uniclust30_database_path=FLAGS.uniclust30_database_path,
@@ -267,7 +247,8 @@ def main(argv):
       template_searcher=template_searcher,
       template_featurizer=template_featurizer,
       use_small_bfd=use_small_bfd,
-      use_precomputed_msas=FLAGS.use_precomputed_msas)
+      use_precomputed_msas=FLAGS.use_precomputed_msas,
+      add_species=add_species)
 
   if run_multimer_system:
     data_pipeline = pipeline_multimer.DataPipeline(
@@ -289,14 +270,12 @@ def main(argv):
   for i, fasta_path in enumerate(FLAGS.fasta_paths):
     fasta_name = fasta_names[i]
     print(f"Info: working on target {fasta_name} at {host_name}")
-    is_prokaryote = is_prokaryote_list[i] if run_multimer_system else None
     predict_structure(
         fasta_path=fasta_path,
         fasta_name=fasta_name,
         output_dir_base=FLAGS.output_dir,
         data_pipeline=data_pipeline,
-        random_seed=random_seed,
-        is_prokaryote=is_prokaryote)
+        random_seed=random_seed)
 
 
 if __name__ == '__main__':

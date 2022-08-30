@@ -98,34 +98,34 @@ def convert_monomer_features(
 
 def convert_monomer_features_af2complex(
     monomer_features: pipeline.FeatureDict,
-    chain_id: str) -> pipeline.FeatureDict:
+    chain_id: str,
+    save_feats_for_mono: bool=False) -> pipeline.FeatureDict:
   """Reshapes and modifies monomer features for multimer models."""
   converted = {}
   converted['auth_chain_id'] = np.asarray(chain_id, dtype=np.object_)
   unnecessary_leading_dim_feats = {
       'domain_name', 'num_alignments', 'seq_length'}
+  saved_feats = {}
   for feature_name, feature in monomer_features.items():
     if feature_name in unnecessary_leading_dim_feats:
       # asarray ensures it's a np.ndarray.
       feature = np.asarray(feature[0], dtype=feature.dtype)
     elif feature_name == 'aatype':
       # The multimer model performs the one-hot operation itself.
+      saved_feats[feature_name] = feature
       feature = np.argmax(feature, axis=-1).astype(np.int32)
     elif feature_name == 'template_aatype':
+      saved_feats[feature_name] = feature
       if feature.shape[0]: ## ignore the case of no template
         feature = np.argmax(feature, axis=-1).astype(np.int32)
       new_order_list = residue_constants.MAP_HHBLITS_AATYPE_TO_OUR_AATYPE
       feature = np.take(new_order_list, feature.astype(np.int32), axis=0)
     elif feature_name == 'template_all_atom_masks':
+      saved_feats[feature_name] = feature
       feature_name = 'template_all_atom_mask'
     converted[feature_name] = feature
-    # new_feature_dict['all_atom_positions'] = np.zeros(
-    #     list(all_atom_mask.shape) + [3])
-    # all_atom_mask = residue_constants.STANDARD_ATOM_MASK[
-    #     chain_features['aatype']]
-    # chain_features['all_atom_mask'] = all_atom_mask
-    # chain_features['all_atom_positions'] = np.zeros(
-    #     list(all_atom_mask.shape) + [3])
+  if save_feats_for_mono:
+    return converted, saved_feats
   return converted
 
 ####################
@@ -231,6 +231,7 @@ def add_assembly_features_af2complex(
 ############
 
 
+
 def pad_msa(np_example, min_num_seq):
   np_example = dict(np_example)
   num_seq = np_example['msa'].shape[0]
@@ -307,7 +308,6 @@ class DataPipeline:
     msa = msa.truncate(max_seqs=self._max_uniprot_hits)
     all_seq_features = pipeline.make_msa_features([msa])
     valid_feats = msa_pairing.MSA_FEATURES + (
-        'msa_uniprot_accession_identifiers',
         'msa_species_identifiers',
     )
     feats = {f'{k}_all_seq': v for k, v in all_seq_features.items()
@@ -316,8 +316,7 @@ class DataPipeline:
 
   def process(self,
               input_fasta_path: str,
-              msa_output_dir: str,
-              is_prokaryote: bool = False) -> pipeline.FeatureDict:
+              msa_output_dir: str) -> pipeline.FeatureDict:
     """Runs alignment tools on the input sequences and creates features."""
     with open(input_fasta_path) as f:
       input_fasta_str = f.read()
@@ -354,9 +353,7 @@ class DataPipeline:
     all_chain_features = add_assembly_features(all_chain_features)
 
     np_example = feature_processing.pair_and_merge(
-        all_chain_features=all_chain_features,
-        is_prokaryote=is_prokaryote,
-    )
+        all_chain_features=all_chain_features)
 
     # Pad MSA to avoid zero-sized extra_msa.
     np_example = pad_msa(np_example, 512)

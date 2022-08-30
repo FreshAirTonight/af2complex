@@ -16,9 +16,9 @@
 import os
 
 from absl.testing import absltest
-import numpy as np
 from alphafold.common import protein
 from alphafold.relax import relax
+import numpy as np
 # Internal import (7716).
 
 
@@ -34,7 +34,8 @@ class RunAmberRelaxTest(absltest.TestCase):
         'tolerance': 2.39,
         'stiffness': 10.0,
         'exclude_residues': [],
-        'max_outer_iterations': 1}
+        'max_outer_iterations': 1,
+        'use_gpu': False}
 
   def test_process(self):
     amber_relax = relax.AmberRelaxation(**self.test_config)

@@ -20,9 +20,10 @@
 #
 """Functions for processing confidence metrics."""
 
-from typing import Dict, Optional, Tuple, Union
+from typing import Dict, Optional, Tuple, Union, List
 import numpy as np
 import scipy.special
+import networkx as nx
 
 
 def compute_plddt(logits: np.ndarray) -> np.ndarray:
@@ -240,9 +241,10 @@ def predicted_tm_score_v1(
 def predicted_interface_tm_score(
     logits: np.ndarray,
     breaks: np.ndarray,
-    residue_indices: np.ndarray,
+    # residue_indices: np.ndarray,
     pos: np.ndarray,
     atom_mask: np.ndarray,
+    asym_id: np.ndarray,
     residue_weights: Optional[np.ndarray] = None,
     distance_threshold: Optional[int] = 4.5,
     is_probs: Optional[bool] = False,
@@ -275,39 +277,16 @@ def predicted_interface_tm_score(
       "num_contacts" - number of contacts along the interface of protein complex
 
   """
-  # only calculate piTMS if a long gap detected, suggesting multi-chain target
-  if not np.abs(residue_indices[-1]-residue_indices[0]-len(residue_indices)) > 10:
+  # only calculate piTMS if a multi-chain target
+  if np.all(asym_id == asym_id[0]):
     return {
       'score': np.asarray(0),
       'num_residues': np.asarray(0, dtype=np.int32),
       'num_contacts': np.asarray(0, dtype=np.int32),
     }
 
-  # Determine which chain each residue belongs to
-  prev_id = np.roll(residue_indices, 1)
-  diff = np.abs(residue_indices - prev_id)
-  chain_breaks = diff > 10
-  residue_chain_id = np.cumsum(chain_breaks)
-
-  # calculates the minimum distance between each residue's heavy atoms
-  def get_min_pairwise_dist(a, b, mask_a, mask_b):
-    a = a[mask_a > 0.5]
-    b = b[mask_b > 0.5]
-    pairwise_dist = scipy.spatial.distance.cdist(a, b, metric='euclidean')
-    return pairwise_dist.min()
-
-  residue_mask = np.zeros(logits.shape[0]).astype(bool)
-  contact_mask = np.zeros(logits.shape[:2]).astype(bool)
-
-  for i in range(pos.shape[0]):
-      for j in range(i+1, pos.shape[0]):  # use symmetry
-          if residue_chain_id[i] != residue_chain_id[j]:
-              if atom_mask[i].sum() == 0 or atom_mask[j].sum() == 0:
-                  continue
-              dist = get_min_pairwise_dist(pos[i], pos[j], atom_mask[i], atom_mask[j])
-              residue_mask[i] = residue_mask[i] or dist < distance_threshold
-              residue_mask[j] = residue_mask[j] or dist < distance_threshold
-              contact_mask[i, j] = contact_mask[i, j] or dist < distance_threshold
+  residue_mask, contact_mask = get_residue_and_contact_masks(
+      asym_id, pos, atom_mask, distance_threshold)
 
   # return 0.0 if no inter-chain contacts found
   if residue_mask.sum() == 0:
@@ -330,34 +309,113 @@ def predicted_interface_tm_score(
     'num_contacts': np.asarray( contact_mask.sum() ),
   }
 
+def make_tm_score_masks(asym_id):
+  # create an inter-chain mask, where only residues relevant to tm scoring are ones.
+  # note that residue pairs of the same chain subject to tm-scoring are zeros.
+  # this force to select the best local frame from residues of other chains.
+  full_length = len(asym_id)
+
+  def _make_tm_score_masks(start_a, end_a):
+      inter_chain_mask = np.zeros((full_length, full_length))
+      chain_mask = np.zeros(full_length, dtype=int)
+      chain_mask[start_a:end_a] = 1
+      inter_chain_mask[start_a:end_a,:] = 1
+      inter_chain_mask[:,start_a:end_a] = 1
+      inter_chain_mask[start_a:end_a,start_a:end_a] = 0
+      return inter_chain_mask == 1, chain_mask == 1
+
+  tm_masks = []
+  for i in range(int(asym_id.max()+1)):
+    rangei = np.where(asym_id == i)[0]
+
+    prev_id = np.roll(rangei, 1)
+    diff = np.abs(rangei - prev_id)
+    non_contiguous = diff > 1
+    non_contiguous[0] = False
+
+    if np.any(non_contiguous):
+      # in case the range is not contiguous (superchain is across chains not
+      # next to each other in the sequence) xor the masks of each contiguous sequence
+      ranges = []
+      start = 0
+      for end in np.where(non_contiguous)[0]:
+        if end == 0:
+          continue
+        ranges.append((rangei[start], rangei[end]))
+        start = end
+      inter_chain_mask = None
+      chain_mask = None
+      for starti, termini in ranges:
+        _inter_mask, _mask  = _make_tm_score_masks(starti, termini)
+        if inter_chain_mask is None:
+          inter_chain_mask = _inter_mask
+          chain_mask = _mask
+        else:
+          inter_chain_mask = np.bitwise_xor(inter_chain_mask, _inter_mask)
+          chain_mask = np.bitwise_xor(chain_mask, _mask)
+        tm_masks.append((inter_chain_mask, chain_mask))
+
+    else:
+      starti, termini = rangei.min(), rangei.max() + 1
+      tm_masks.append(_make_tm_score_masks(starti, termini))
+
+  return tm_masks
+
+def join_superchains_asym_id(
+    asym_id: np.ndarray,
+    asym_id_list: Optional[List] = None,) -> np.ndarray:
+  """ Returns a new asym_id array where each chain in a superchain have the
+    same index. This enables each superchain to be considered as a single
+    chain in subsequent calculations.
+  """
+  if asym_id_list is None:
+    return asym_id, None
+
+  full_length = len(asym_id)
+  super_id2chain_ids = {}
+  # make new asym_id list with one index per superchain
+  new_asym_id = np.empty(asym_id.shape)
+  for i, id_list in enumerate(asym_id_list):
+    chain_mask = np.zeros(full_length, dtype=bool)
+    super_id2chain_ids[i] = []
+    for idx in id_list:
+      i_range = np.where(asym_id == idx)[0]
+      start_a, end_a = i_range.min(), i_range.max()+1
+      chain_mask[start_a:end_a] = 1
+      super_id2chain_ids[i].append(idx)
+    new_asym_id[chain_mask] = i
+  if len(super_id2chain_ids) == 0:
+    return new_asym_id, None
+
+  return new_asym_id, super_id2chain_ids
 
 def interface_score(
     logits: np.ndarray,
     breaks: np.ndarray,
-    residue_indices: np.ndarray,
     pos: np.ndarray,
     atom_mask: np.ndarray,
+    asym_id: np.ndarray,
     residue_weights: Optional[np.ndarray] = None,
     distance_threshold: Optional[int] = 4.5,
-    is_probs: Optional[bool] = False) -> Dict[str, Union[np.ndarray, int]]:
-  """Computes the interface-score of a complex model. This is a further
-  tweak from piTM by looking the best tm-score estimate from other chains
-
-    Score defined in the AF2Complex manuscript (2021)
+    is_probs: Optional[bool] = False,) -> Dict[str, Union[np.ndarray, int]]:
+  """ Returns the interface-score, number of residues in the interface, and
+    number of contacts of a complex model. This is a further tweak from piTM by
+    looking the best tm-score estimate from other chains
 
   Args:
     logits: [num_res, num_res, num_bins] the logits output from
       PredictedAlignedErrorHead.
     breaks: [num_bins] the error bins.
-    residue_indices: [num_res] index of each residue
     pos: [num_res, atom_type_num, 3] the predicted atom positions
     atom_mask: mask for atoms (each residue type has different number of atoms)
-    distogram_logits: [num_res, num_res, 64] the logits for the distance bins \
-      between residues.
+    asym_id: [num_res] a unique integer per chain indicating the chain number.
+      The ordering of the input chains is arbitrary (As defined by AF-Multimer
+      paper)
     residue_weights: [num_res] the per residue weights to use for the
       expectation.
     distance_threshold: maximum distance between two residue's heavy atoms
       from different chains to be considered in the interface
+    is_probs: boolean indicating whether the logits argument are probabilities
   Returns:
     None if target is a single chain, otherwise
     pitm_dict: dict of np.ndarrays containing
@@ -365,39 +423,16 @@ def interface_score(
       "num_residues" - number of residues in the interface
       "num_contacts" - number of contacts along the interface of protein complex
   """
-   # only calculate the score if a long gap detected, suggesting multi-chain target
-  if not np.abs(residue_indices[-1]-residue_indices[0]-len(residue_indices)) > 10:
+  # only calculate the score if multi-chain target
+  if np.all(asym_id == asym_id[0]):
     return {
       'score': np.asarray(0),
       'num_residues': np.asarray(0, dtype=np.int32),
       'num_contacts': np.asarray(0, dtype=np.int32),
     }
 
-  # Determine which chain each residue belongs to
-  prev_id = np.roll(residue_indices, 1)
-  diff = np.abs(residue_indices - prev_id)
-  chain_breaks = diff > 10
-  residue_chain_id = np.cumsum(chain_breaks)
-
-  # calculates the minimum distance between each residue's heavy atoms
-  def get_min_pairwise_dist(a, b, mask_a, mask_b):
-    a = a[mask_a > 0.5]
-    b = b[mask_b > 0.5]
-    pairwise_dist = scipy.spatial.distance.cdist(a, b, metric='euclidean')
-    return pairwise_dist.min()
-
-  residue_mask = np.zeros(logits.shape[0]).astype(bool)
-  contact_mask = np.zeros(logits.shape[:2]).astype(bool)
-
-  for i in range(pos.shape[0]):
-      for j in range(i+1, pos.shape[0]):  # use symmetry
-          if residue_chain_id[i] != residue_chain_id[j]:
-              if atom_mask[i].sum() == 0 or atom_mask[j].sum() == 0:
-                  continue
-              dist = get_min_pairwise_dist(pos[i], pos[j], atom_mask[i], atom_mask[j])
-              residue_mask[i] = residue_mask[i] or dist < distance_threshold
-              residue_mask[j] = residue_mask[j] or dist < distance_threshold
-              contact_mask[i, j] = contact_mask[i, j] or dist < distance_threshold
+  residue_mask, contact_mask = get_residue_and_contact_masks(
+      asym_id, pos, atom_mask, distance_threshold)
 
   # return 0.0 if no inter-chain contacts found
   if residue_mask.sum() == 0:
@@ -407,40 +442,174 @@ def interface_score(
       'num_contacts': np.asarray(0, dtype=np.int32),
     }
 
+  score = calculate_interface_score(
+    logits, breaks, asym_id, residue_mask, residue_weights, is_probs
+  )
+
+  return {
+      'score': score,
+      'num_residues': np.asarray(residue_mask.sum(), dtype=np.int32),
+      'num_contacts': np.asarray(contact_mask.sum(), dtype=np.int32),
+  }
+
+def calculate_interface_score(
+    logits: np.ndarray,
+    breaks: np.ndarray,
+    asym_id: np.ndarray,
+    residue_mask: np.ndarray,
+    residue_weights: Optional[np.ndarray] = None,
+    is_probs: Optional[bool] = False,) -> Dict[str, Union[np.ndarray, int]]:
+  """Computes the interface-score of a complex model.
+    Score defined in the AF2Complex manuscript (2021)
+
+  Args:
+    logits: [num_res, num_res, num_bins] the logits output from
+      PredictedAlignedErrorHead.
+    breaks: [num_bins] the error bins.
+    asym_id: [num_res] a unique integer per chain indicating the chain number.
+      The ordering of the input chains is arbitrary (As defined by AF-Multimer
+      paper)
+    residue_mask: [num_res] array indicating if a residue is in the interface
+      of the complex.
+    residue_weights: [num_res] the per residue weights to use for the
+      expectation.
+    distance_threshold: maximum distance between two residue's heavy atoms
+      from different chains to be considered in the interface
+    is_probs: boolean indicating whether the logits argument are probabilities
+
+  Returns:
+    score - piTM score for the sequence
+  """
+
+  tm_masks= make_tm_score_masks(asym_id)
+
   # select only interfacial residues
   if residue_weights is None:
     residue_weights = np.ones(logits.shape[0])
   residue_weights = residue_weights * residue_mask
 
-  # create an inter-chain mask, where only residues relevant to tm scoring are ones.
-  # note that residue pairs of the same chain subject to tm-scoring are zeros.
-  # this force to select the best local frame from residues of other chains.
-  next_id = np.roll(residue_indices, -1)
-  diff = np.abs(next_id - residue_indices)
-  termini = np.where( diff > 1 )[0] + 1
-
+  # calculate the tm-score for interface residues of each chain (or chain set) pair, and sum them.
   score = 0
-  num_chains = len(termini)
-  full_length = len(residue_indices)
-  # calculate the tm-score for interface residues of each chain, and sum them.
-  for i in range(num_chains):
-    k = termini[i]
-    if i == 0: k_ = 0
-    else: k_ = termini[i-1]
-    inter_chain_mask = np.zeros((full_length, full_length))
-    inter_chain_mask[k_:k,:] = 1
-    inter_chain_mask[:,k_:k] = 1
-    inter_chain_mask[k_:k,k_:k] = 0
-
-    chain_mask = np.zeros(full_length, dtype=int)
-    chain_mask[k_:k] = 1
-
+  for inter_chain_mask, chain_mask in tm_masks:
     sc = predicted_tm_score_v1( logits, breaks, residue_weights,is_probs=is_probs,
-        chain_mask=chain_mask, inter_chain_mask=inter_chain_mask )
-    #print(f'sc = {sc:.3f}')
+           chain_mask=chain_mask, inter_chain_mask=inter_chain_mask )
     score += sc
 
   # return the  interaction score and other interface data
-  return { 'score': score,
-    'num_residues': np.asarray( residue_mask.sum() ),
-    'num_contacts': np.asarray( contact_mask.sum() ) }
+  return score
+  
+def get_residue_and_contact_masks(
+    asym_id: np.array,
+    pos: np.ndarray,
+    atom_mask: np.ndarray,
+    distance_threshold: Optional[float] = 4.5,):
+  """Computes the residue and contact masks
+
+  Args:
+    asym_id: [num_res] a unique integer per chain indicating the chain number.
+      The ordering of the input chains is arbitrary (As defined by AF-Multimer
+      paper)
+    pos: [num_res, atom_type_num, 3] the predicted atom positions
+    atom_mask: mask for atoms (each residue type has different number of atoms)
+    distance_threshold: maximum distance between two residue's heavy atoms
+      from different chains to be considered in the interface
+
+  Returns:
+    residue_mask - [num_res] array indicating if a residue is in the interface
+      of the complex.
+    contact_mask - [num_res, num_res] 2D array indicating which residues are
+      in contact with each other (only for interface residues)
+  """
+
+  residue_mask = np.zeros(pos.shape[0]).astype(bool)
+  contact_mask = np.zeros((pos.shape[0], pos.shape[0])).astype(bool)
+
+  # calculates the minimum distance between each residue's heavy atoms
+  def get_min_pairwise_dist(a, b, mask_a, mask_b):
+    a = a[mask_a > 0.5]
+    b = b[mask_b > 0.5]
+    pairwise_dist = scipy.spatial.distance.cdist(a, b, metric='euclidean')
+    return pairwise_dist.min()
+
+  for i in range(pos.shape[0]):
+      for j in range(i+1, pos.shape[0]):  # use symmetry
+          if asym_id[i] != asym_id[j]:
+              if atom_mask[i].sum() == 0 or atom_mask[j].sum() == 0:
+                  continue
+              dist = get_min_pairwise_dist(pos[i], pos[j], atom_mask[i], atom_mask[j])
+              residue_mask[i] = residue_mask[i] or dist < distance_threshold
+              residue_mask[j] = residue_mask[j] or dist < distance_threshold
+              contact_mask[i, j] = contact_mask[i, j] or dist < distance_threshold
+  return residue_mask, contact_mask
+
+################################################################################
+def cluster_analysis(
+  asym_id: np.ndarray,
+  pos: np.ndarray,
+  atom_mask: np.ndarray,
+  distance_threshold: Optional[float] = 4.5,
+  edge_contacts_thres: Optional[int] = 10,
+  superid2chainids: Optional[Dict[int, List[int]]] = None,
+  ) -> Tuple[int, int]:
+  """Computes information about clusters of protein chains in the results.
+
+  Args:
+    asym_id: [num_res] a unique integer per chain indicating the chain number.
+      The ordering of the input chains is arbitrary (As defined by AF-Multimer
+      paper)
+    pos: [num_res, atom_type_num, 3] the predicted atom positions
+    atom_mask: mask for atoms (each residue type has different number of atoms)
+    distance_threshold: maximum distance between two residue's heavy atoms
+      from different chains to be considered in the interface
+    edge_contact_thres: number for contacts between chains for two chains to
+      be considered adjacent in the connectivity graph
+
+  Returns:
+    clus_res_dict: dict of np.ndarrays containing
+      "num_clusters" - number of clusters in the result protein complex prediction
+      "cluster_size" - list of the number of chains in each cluster
+      "clusters" - indices of chains for each cluster
+  """
+
+  asym_id = asym_id.astype(int)
+  res_mask, contact_mask = get_residue_and_contact_masks(
+    asym_id, pos, atom_mask, distance_threshold)
+
+  num_chains = asym_id.max() + 1
+  num_res = len(asym_id)
+  chain_adj_count = np.zeros((num_chains, num_chains))
+
+  resid2asymid = {k: v for k, v in enumerate(asym_id)}
+
+  for i in range(num_res):
+      for j in range(i+1, num_res):  # use symmetry
+          asym_id_a = resid2asymid[i]
+          asym_id_b = resid2asymid[j]
+          if asym_id_a != asym_id_b:
+            chain_adj_count[asym_id_a, asym_id_b] += contact_mask[i, j]
+
+  chain_adj_mat = chain_adj_count > edge_contacts_thres
+  chain_adj_mat = np.bitwise_or(chain_adj_mat, chain_adj_mat.T)
+  graph = nx.from_numpy_matrix(chain_adj_mat)
+  connected_components = nx.connected_components(graph)
+  num_clusters = 0
+  cluster_size = []
+  clusters = []
+  for c in connected_components:
+    num_clusters += 1
+    cluster_size.append(len(c))
+    clusters.append(list(c))
+
+  if superid2chainids: # adjust chain_sizes
+    cluster_size = []
+    for c in clusters:
+      size = 0
+      for i in c:
+        size += len(superid2chainids[i])
+      cluster_size.append(size)
+
+  return {
+    'num_clusters': num_clusters,
+    'cluster_size': cluster_size,
+    'clusters': clusters,
+  }

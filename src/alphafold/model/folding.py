@@ -16,13 +16,6 @@
 
 import functools
 from typing import Dict
-
-import haiku as hk
-import jax
-import jax.numpy as jnp
-import ml_collections
-import numpy as np
-
 from alphafold.common import residue_constants
 from alphafold.model import all_atom
 from alphafold.model import common_modules
@@ -30,6 +23,11 @@ from alphafold.model import prng
 from alphafold.model import quat_affine
 from alphafold.model import r3
 from alphafold.model import utils
+import haiku as hk
+import jax
+import jax.numpy as jnp
+import ml_collections
+import numpy as np
 
 
 def squared_difference(x, y):
@@ -752,10 +750,10 @@ def find_structural_violations(
   # Compute the Van der Waals radius for every atom
   # (the first letter of the atom name is the element type).
   # Shape: (N, 14).
-  atomtype_radius = [
+  atomtype_radius = jnp.array([
       residue_constants.van_der_waals_radius[name[0]]
       for name in residue_constants.atom_types
-  ]
+  ])
   atom14_atom_radius = batch['atom14_atom_exists'] * utils.batched_gather(
       atomtype_radius, batch['residx_atom14_to_atom37'])
 

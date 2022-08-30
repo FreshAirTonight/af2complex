@@ -18,7 +18,7 @@
 
 """Code for constructing the model."""
 import os
-from typing import Any, Mapping, Optional, Union
+from typing import Any, Mapping, Optional, Union, List
 import pickle
 
 from absl import logging
@@ -37,7 +37,9 @@ import tree
 def get_confidence_metrics(
     prediction_result: Mapping[str, Any],
     multimer_mode: bool,
-    residue_index: Optional[np.ndarray] = None) -> Mapping[str, Any]:
+    residue_index: Optional[np.ndarray] = None,
+    edge_contacts_thres: Optional[int] = 10,
+    superid2chainids: Optional[Mapping[int, List[int]]]=None) -> Mapping[str, Any]:
   """Post processes prediction_result to get confidence metrics."""
   confidence_metrics = {}
   confidence_metrics['plddt'] = confidence.compute_plddt(
@@ -65,15 +67,29 @@ def get_confidence_metrics(
     confidence_metrics['pitm'] = confidence.predicted_interface_tm_score(
         np.asarray(prediction_result['predicted_aligned_error']['logits']),
         np.asarray(prediction_result['predicted_aligned_error']['breaks']),
-        np.asarray(residue_index),
+        # np.asarray(residue_index),
         np.asarray(prediction_result['structure_module']['final_atom_positions']),
-        np.asarray(prediction_result['structure_module']['final_atom_mask']))
+        np.asarray(prediction_result['structure_module']['final_atom_mask']),
+        np.asarray(prediction_result['predicted_aligned_error']['asym_id']),
+        )
+    
     confidence_metrics['interface'] = confidence.interface_score(
         np.asarray(prediction_result['predicted_aligned_error']['logits']),
         np.asarray(prediction_result['predicted_aligned_error']['breaks']),
-        np.asarray(residue_index),
         np.asarray(prediction_result['structure_module']['final_atom_positions']),
-        np.asarray(prediction_result['structure_module']['final_atom_mask']))
+        np.asarray(prediction_result['structure_module']['final_atom_mask']),
+        np.asarray(prediction_result['predicted_aligned_error']['asym_id']),
+        )
+    asym_id = np.asarray(prediction_result['predicted_aligned_error']['asym_id'])
+    if not np.all(asym_id == asym_id[0]): # multi-chain target
+      confidence_metrics['cluster_analysis'] = confidence.cluster_analysis(
+        np.asarray(prediction_result['predicted_aligned_error']['asym_id']),
+        np.asarray(prediction_result['structure_module']['final_atom_positions']),
+        np.asarray(prediction_result['structure_module']['final_atom_mask']),
+        edge_contacts_thres=edge_contacts_thres,
+        superid2chainids=superid2chainids,
+      )
+
   #if not multimer_mode:
     # Monomer models use mean pLDDT for model ranking.
     #confidence_metrics['ranking_confidence'] = np.mean(
@@ -172,7 +188,8 @@ class RunModel:
     return shape
 
   def predict(self, feat: features.FeatureDict, random_seed=0,
-            prev=None, prev_ckpt_iter=0) -> Mapping[str, Any]:
+            prev=None, prev_ckpt_iter=0, asym_id_list=None, asym_id=None, 
+            edge_contacts_thres=10) -> Mapping[str, Any]:
     """Makes a prediction by inferencing the model on the provided features.
 
     Args:
@@ -228,10 +245,14 @@ class RunModel:
         res_index = feat['residue_index']
     else:
         res_index = feat['residue_index'][0]
+      
+    # join superchains under one asym_id (if needed)
+    asym_id, superid2chainids = confidence.join_superchains_asym_id(asym_id, asym_id_list)
+    result['predicted_aligned_error']['asym_id'] = asym_id
 
     result.update(
       get_confidence_metrics(
-        result, multimer_mode=self.multimer_mode, residue_index=res_index))
+        result, multimer_mode=self.multimer_mode, residue_index=res_index, superid2chainids=superid2chainids))
     #logging.info('Output shape was %s',
     #             tree.map_structure(lambda x: x.shape, result))
 
@@ -262,16 +283,17 @@ class RunModel:
           "pitm": confidence.predicted_interface_tm_score(
             a_logits,
             a_break,
-            res_index,
+            # res_index,
             s,
             m,
+            asym_id,
           ),
           "interface": confidence.interface_score(
             a_logits,
             a_break,
-            res_index,
             s,
             m,
+            asym_id,
           ),
         }
 

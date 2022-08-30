@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 '''
-Plot contact probability from a pickle output file by AlphaFold
+Plot contact probability from a pickle output file by AF2Complex
 '''
 
 import numpy as np

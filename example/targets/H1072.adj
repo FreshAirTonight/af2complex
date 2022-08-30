@@ -1,0 +1,10 @@
+# An example of adjacency file used with custom MSAs
+*A1=0 # Assign a name to an index by starting line with '*'
+*A2=1
+*B1=2
+*B2=3
+
+# define each chain contact pair by separating chain names by '-'
+# can also define this contact as: 0-2, A1-2, or 0-B1
+A1-B1
+A2-B2

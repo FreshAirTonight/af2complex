@@ -16,7 +16,6 @@
 
 import collections
 import functools
-import re
 import string
 from typing import Any, Dict, Iterable, List, Sequence
 
@@ -25,12 +24,6 @@ from alphafold.data import pipeline
 import numpy as np
 import pandas as pd
 import scipy.linalg
-
-ALPHA_ACCESSION_ID_MAP = {x: y for y, x in enumerate(string.ascii_uppercase)}
-ALPHANUM_ACCESSION_ID_MAP = {
-    chr: num for num, chr in enumerate(string.ascii_uppercase + string.digits)
-}  # A-Z,0-9
-NUM_ACCESSION_ID_MAP = {str(x): x for x in range(10)}                # 0-9
 
 MSA_GAP_IDX = residue_constants.restypes_with_x_and_gap.index('-')
 SEQUENCE_GAP_CUTOFF = 0.5
@@ -54,31 +47,19 @@ SEQ_FEATURES = ('residue_index', 'aatype', 'all_atom_positions',
                 'literature_positions', 'atom_indices_to_group_indices',
                 'rigid_group_default_frame')
 TEMPLATE_FEATURES = ('template_aatype', 'template_all_atom_positions',
-                     'template_all_atom_mask',) 
+                     'template_all_atom_mask')
 # Added for AF2Complex
 ADDITIONAL_TEMPLATE_FEATURES = ('template_domain_names', 'template_sequence',
                  'template_sum_probs')
 CHAIN_FEATURES = ('num_alignments', 'seq_length')
 
 
-domain_name_pattern = re.compile(
-    r'''^(?P<pdb>[a-z\d]{4})
-    \{(?P<bioassembly>[\d+(\+\d+)?])\}
-    (?P<chain>[a-zA-Z\d]+)
-    \{(?P<transform_index>\d+)\}$
-    ''', re.VERBOSE)
-
-
 def create_paired_features(
-    chains: Iterable[pipeline.FeatureDict],
-    prokaryotic: bool,
-    ) ->  List[pipeline.FeatureDict]:
+    chains: Iterable[pipeline.FeatureDict]) ->  List[pipeline.FeatureDict]:
   """Returns the original chains with paired NUM_SEQ features.
 
   Args:
     chains:  A list of feature dictionaries for each chain.
-    prokaryotic: Whether the target complex is from a prokaryotic organism.
-      Used to determine the distance metric for pairing.
 
   Returns:
     A list of feature dictionaries with sequence features including only
@@ -91,8 +72,7 @@ def create_paired_features(
     return chains
   else:
     updated_chains = []
-    paired_chains_to_paired_row_indices = pair_sequences(
-        chains, prokaryotic)
+    paired_chains_to_paired_row_indices = pair_sequences(chains)
     paired_rows = reorder_paired_rows(
         paired_chains_to_paired_row_indices)
 
@@ -127,8 +107,7 @@ def pad_features(feature: np.ndarray, feature_name: str) -> np.ndarray:
     num_res = feature.shape[1]
     padding = MSA_PAD_VALUES[feature_name] * np.ones([1, num_res],
                                                      feature.dtype)
-  elif feature_name in ('msa_uniprot_accession_identifiers_all_seq',
-                        'msa_species_identifiers_all_seq'):
+  elif feature_name == 'msa_species_identifiers_all_seq':
     padding = [b'']
   else:
     return feature
@@ -146,11 +125,9 @@ def _make_msa_df(chain_features: pipeline.FeatureDict) -> pd.DataFrame:
   msa_df = pd.DataFrame({
       'msa_species_identifiers':
           chain_features['msa_species_identifiers_all_seq'],
-      'msa_uniprot_accession_identifiers':
-          chain_features['msa_uniprot_accession_identifiers_all_seq'],
       'msa_row':
           np.arange(len(
-              chain_features['msa_uniprot_accession_identifiers_all_seq'])),
+              chain_features['msa_species_identifiers_all_seq'])),
       'msa_similarity': per_seq_similarity,
       'gap': per_seq_gap
   })
@@ -163,139 +140,6 @@ def _create_species_dict(msa_df: pd.DataFrame) -> Dict[bytes, pd.DataFrame]:
   for species, species_df in msa_df.groupby('msa_species_identifiers'):
     species_lookup[species] = species_df
   return species_lookup
-
-
-@functools.lru_cache(maxsize=65536)
-def encode_accession(accession_id: str) -> int:
-  """Map accession codes to the serial order in which they were assigned."""
-  alpha = ALPHA_ACCESSION_ID_MAP        # A-Z
-  alphanum = ALPHANUM_ACCESSION_ID_MAP  # A-Z,0-9
-  num = NUM_ACCESSION_ID_MAP            # 0-9
-
-  coding = 0
-
-  # This is based on the uniprot accession id format
-  # https://www.uniprot.org/help/accession_numbers
-  if accession_id[0] in {'O', 'P', 'Q'}:
-    bases = (alpha, num, alphanum, alphanum, alphanum, num)
-  elif len(accession_id) == 6:
-    bases = (alpha, num, alpha, alphanum, alphanum, num)
-  elif len(accession_id) == 10:
-    bases = (alpha, num, alpha, alphanum, alphanum, num, alpha, alphanum,
-             alphanum, num)
-
-  product = 1
-  for place, base in zip(reversed(accession_id), reversed(bases)):
-    coding += base[place] * product
-    product *= len(base)
-
-  return coding
-
-
-def _calc_id_diff(id_a: bytes, id_b: bytes) -> int:
-  return abs(encode_accession(id_a.decode()) - encode_accession(id_b.decode()))
-
-
-def _find_all_accession_matches(accession_id_lists: List[List[bytes]],
-                                diff_cutoff: int = 20
-                                ) -> List[List[Any]]:
-  """Finds accession id matches across the chains based on their difference."""
-  all_accession_tuples = []
-  current_tuple = []
-  tokens_used_in_answer = set()
-
-  def _matches_all_in_current_tuple(inp: bytes, diff_cutoff: int) -> bool:
-    return all((_calc_id_diff(s, inp) < diff_cutoff for s in current_tuple))
-
-  def _all_tokens_not_used_before() -> bool:
-    return all((s not in tokens_used_in_answer for s in current_tuple))
-
-  def dfs(level, accession_id, diff_cutoff=diff_cutoff) -> None:
-    if level == len(accession_id_lists) - 1:
-      if _all_tokens_not_used_before():
-        all_accession_tuples.append(list(current_tuple))
-        for s in current_tuple:
-          tokens_used_in_answer.add(s)
-      return
-
-    if level == -1:
-      new_list = accession_id_lists[level+1]
-    else:
-      new_list = [(_calc_id_diff(accession_id, s), s) for
-                  s in accession_id_lists[level+1]]
-      new_list = sorted(new_list)
-      new_list = [s for d, s in new_list]
-
-    for s in new_list:
-      if (_matches_all_in_current_tuple(s, diff_cutoff) and
-          s not in tokens_used_in_answer):
-        current_tuple.append(s)
-        dfs(level + 1, s)
-        current_tuple.pop()
-  dfs(-1, '')
-  return all_accession_tuples
-
-
-def _accession_row(msa_df: pd.DataFrame, accession_id: bytes) -> pd.Series:
-  matched_df = msa_df[msa_df.msa_uniprot_accession_identifiers == accession_id]
-  return matched_df.iloc[0]
-
-
-def _match_rows_by_genetic_distance(
-    this_species_msa_dfs: List[pd.DataFrame],
-    cutoff: int = 20) -> List[List[int]]:
-  """Finds MSA sequence pairings across chains within a genetic distance cutoff.
-
-  The genetic distance between two sequences is approximated by taking the
-  difference in their UniProt accession ids.
-
-  Args:
-    this_species_msa_dfs: a list of dataframes containing MSA features for
-      sequences for a specific species. If species is missing for a chain, the
-      dataframe is set to None.
-    cutoff: the genetic distance cutoff.
-
-  Returns:
-    A list of lists, each containing M indices corresponding to paired MSA rows,
-    where M is the number of chains.
-  """
-  num_examples = len(this_species_msa_dfs)  # N
-
-  accession_id_lists = []  # M
-  match_index_to_chain_index = {}
-  for chain_index, species_df in enumerate(this_species_msa_dfs):
-    if species_df is not None:
-      accession_id_lists.append(
-          list(species_df.msa_uniprot_accession_identifiers.values))
-      # Keep track of which of the this_species_msa_dfs are not None.
-      match_index_to_chain_index[len(accession_id_lists) - 1] = chain_index
-
-  all_accession_id_matches = _find_all_accession_matches(
-      accession_id_lists, cutoff)  # [k, M]
-
-  all_paired_msa_rows = []  # [k, N]
-  for accession_id_match in all_accession_id_matches:
-    paired_msa_rows = []
-    for match_index, accession_id in enumerate(accession_id_match):
-      # Map back to chain index.
-      chain_index = match_index_to_chain_index[match_index]
-      seq_series = _accession_row(
-          this_species_msa_dfs[chain_index], accession_id)
-
-      if (seq_series.msa_similarity > SEQUENCE_SIMILARITY_CUTOFF or
-          seq_series.gap > SEQUENCE_GAP_CUTOFF):
-        continue
-      else:
-        paired_msa_rows.append(seq_series.msa_row)
-    # If a sequence is skipped based on sequence similarity to the respective
-    # target sequence or a gap cuttoff, the lengths of accession_id_match and
-    # paired_msa_rows will be different. Skip this match.
-    if len(paired_msa_rows) == len(accession_id_match):
-      paired_and_non_paired_msa_rows = np.array([-1] * num_examples)
-      matched_chain_indices = list(match_index_to_chain_index.values())
-      paired_and_non_paired_msa_rows[matched_chain_indices] = paired_msa_rows
-      all_paired_msa_rows.append(list(paired_and_non_paired_msa_rows))
-  return all_paired_msa_rows
 
 
 def _match_rows_by_sequence_similarity(this_species_msa_dfs: List[pd.DataFrame]
@@ -334,8 +178,8 @@ def _match_rows_by_sequence_similarity(this_species_msa_dfs: List[pd.DataFrame]
   return all_paired_msa_rows
 
 
-def pair_sequences(examples: List[pipeline.FeatureDict],
-                   prokaryotic: bool) -> Dict[int, np.ndarray]:
+def pair_sequences(examples: List[pipeline.FeatureDict]
+                   ) -> Dict[int, np.ndarray]:
   """Returns indices for paired MSA sequences across chains."""
 
   num_examples = len(examples)
@@ -377,23 +221,7 @@ def pair_sequences(examples: List[pipeline.FeatureDict],
                   isinstance(species_df, pd.DataFrame)]) > 600):
       continue
 
-    # In prokaryotes (and some eukaryotes), interacting genes are often
-    # co-located on the chromosome into operons. Because of that we can assume
-    # that if two proteins' intergenic distance is less than a threshold, they
-    # two proteins will form an an interacting pair.
-    # In most eukaryotes, a single protein's MSA can contain many paralogs.
-    # Two genes may interact even if they are not close by genomic distance.
-    # In case of eukaryotes, some methods pair MSA sequences using sequence
-    # similarity method.
-    # See Jinbo Xu's work:
-    # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6030867/#B28.
-    if prokaryotic:
-      paired_msa_rows = _match_rows_by_genetic_distance(this_species_msa_dfs)
-
-      if not paired_msa_rows:
-        continue
-    else:
-      paired_msa_rows = _match_rows_by_sequence_similarity(this_species_msa_dfs)
+    paired_msa_rows = _match_rows_by_sequence_similarity(this_species_msa_dfs)
     all_paired_msa_rows.extend(paired_msa_rows)
     all_paired_msa_rows_dict[species_dfs_present].extend(paired_msa_rows)
   all_paired_msa_rows_dict = {
@@ -439,7 +267,8 @@ def block_diag(*arrs: np.ndarray, pad_value: float = 0.0) -> np.ndarray:
 
 def _correct_post_merged_feats_af2complex(
     np_example: pipeline.FeatureDict,
-    monomers) -> pipeline.FeatureDict:
+    np_chains_list,
+    pair_msa_sequences = False) -> pipeline.FeatureDict:
   """Adds features that need to be computed/recomputed post merging using
     AF2Complex preprocessing
   """
@@ -449,23 +278,28 @@ def _correct_post_merged_feats_af2complex(
   np_example['num_alignments'] = np.asarray(np_example['msa'].shape[0],
                                             dtype=np.int32)
 
-  # Generate a bias that is 1 for the first row of every block in the
-  # block diagonal MSA - i.e. make sure the cluster stack always includes
-  # the query sequences for each chain (since the first row is the query
-  # sequence).
-  cluster_bias_masks = []
-  for chain in monomers:
-    mask = np.zeros(chain['feature_dict']['msa'].shape[0])
-    mask[0] = 1
-    cluster_bias_masks.append(mask)
-  np_example['cluster_bias_mask'] = np.concatenate(cluster_bias_masks)
+  if not pair_msa_sequences:
+    # Generate a bias that is 1 for the first row of every block in the
+    # block diagonal MSA - i.e. make sure the cluster stack always includes
+    # the query sequences for each chain (since the first row is the query
+    # sequence).
+    cluster_bias_masks = []
+    for chain in np_chains_list:
+      mask = np.zeros(chain['feature_dict']['msa'].shape[0])
+      mask[0] = 1
+      cluster_bias_masks.append(mask)
+    np_example['cluster_bias_mask'] = np.concatenate(cluster_bias_masks)
 
-  # Initialize Bert mask with masked out off diagonals.
-  msa_masks = [np.ones(x['feature_dict']['msa'].shape, dtype=np.float32)
-               for x in monomers]
+    # Initialize Bert mask with masked out off diagonals.
+    msa_masks = [np.ones(x['feature_dict']['msa'].shape, dtype=np.float32)
+                 for x in np_chains_list]
 
-  np_example['bert_mask'] = block_diag(
-      *msa_masks, pad_value=0)
+    np_example['bert_mask'] = block_diag(
+        *msa_masks, pad_value=0)
+  else:
+    np_example['cluster_bias_mask'] = np.zeros(np_example['msa'].shape[0])
+    np_example['cluster_bias_mask'][0] = 1
+
   return np_example
 
 def _correct_post_merged_feats(
@@ -474,8 +308,11 @@ def _correct_post_merged_feats(
     pair_msa_sequences: bool) -> pipeline.FeatureDict:
   """Adds features that need to be computed/recomputed post merging."""
 
-  np_example['seq_length'] = np.asarray(np_example['aatype'].shape[0],
-                                        dtype=np.int32)
+  if 'aatype' in np_example:
+    seq_length = np_example['aatype'].shape[0]
+  else:
+    seq_length = np_example['msa'].shape[1]
+  np_example['seq_length'] = np.asarray(seq_length, dtype=np.int32)
   np_example['num_alignments'] = np.asarray(np_example['msa'].shape[0],
                                             dtype=np.int32)
 
@@ -561,6 +398,8 @@ def _merge_features_from_multiple_chains(
         merged_example[feature_name] = block_diag(
             *feats, pad_value=MSA_PAD_VALUES[feature_name])
     elif feature_name_split in SEQ_FEATURES:
+      if type(feats[0]) != np.ndarray:
+        continue
       merged_example[feature_name] = np.concatenate(feats, axis=0)
     elif feature_name_split in TEMPLATE_FEATURES:
       merged_example[feature_name] = np.concatenate(feats, axis=1)
@@ -635,10 +474,10 @@ def merge_chain_features(np_chains_list: List[pipeline.FeatureDict],
       np_chains_list, pair_msa_sequences=False)
   if pair_msa_sequences:
     np_example = _concatenate_paired_and_unpaired_features(np_example)
-  np_example = _correct_post_merged_feats(
-      np_example=np_example,
-      np_chains_list=np_chains_list,
-      pair_msa_sequences=pair_msa_sequences)
+    np_example = _correct_post_merged_feats(
+        np_example=np_example,
+        np_chains_list=np_chains_list,
+        pair_msa_sequences=pair_msa_sequences)
 
   return np_example
 
@@ -651,6 +490,7 @@ def deduplicate_unpaired_sequences(
   msa_features = MSA_FEATURES
 
   for chain in np_chains:
+    # Convert the msa_all_seq numpy array to a tuple for hashing.
     sequence_set = set(tuple(s) for s in chain['msa_all_seq'])
     keep_rows = []
     # Go through unpaired MSA seqs and remove any rows that correspond to the
@@ -660,12 +500,6 @@ def deduplicate_unpaired_sequences(
         keep_rows.append(row_num)
     for feature_name in feature_names:
       if feature_name in msa_features:
-        if keep_rows:
-          chain[feature_name] = chain[feature_name][keep_rows]
-        else:
-          new_shape = list(chain[feature_name].shape)
-          new_shape[0] = 0
-          chain[feature_name] = np.zeros(new_shape,
-                                         dtype=chain[feature_name].dtype)
+        chain[feature_name] = chain[feature_name][keep_rows]
     chain['num_alignments'] = np.array(chain['msa'].shape[0], dtype=np.int32)
   return np_chains

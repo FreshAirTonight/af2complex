@@ -1,0 +1,134 @@
+{
+    "chain_lengths": [
+        127,
+        98
+    ],
+    "chains": {
+        "A": "T1065s1_1",
+        "B": "T1065s2_1"
+    },
+    "clusters": {
+        "model_1_multimer_v2_p1_220812_279106": {
+            "cluster_sizes": [
+                2
+            ],
+            "clusters": [
+                [
+                    "T1065s1_0",
+                    "T1065s2_0"
+                ]
+            ],
+            "num_clusters": 1
+        },
+        "model_3_multimer_v2_p1_220812_279106": {
+            "cluster_sizes": [
+                2
+            ],
+            "clusters": [
+                [
+                    "T1065s1_0",
+                    "T1065s2_0"
+                ]
+            ],
+            "num_clusters": 1
+        }
+    },
+    "interface score": {
+        "model_1_multimer_v2_p1_220812_279106": 0.7207,
+        "model_1_multimer_v2_p1_220812_279106_recycled_00": 0.659,
+        "model_1_multimer_v2_p1_220812_279106_recycled_01": 0.6948,
+        "model_1_multimer_v2_p1_220812_279106_recycled_02": 0.7021,
+        "model_3_multimer_v2_p1_220812_279106": 0.6986,
+        "model_3_multimer_v2_p1_220812_279106_recycled_00": 0.6772,
+        "model_3_multimer_v2_p1_220812_279106_recycled_01": 0.6912,
+        "model_3_multimer_v2_p1_220812_279106_recycled_02": 0.6947
+    },
+    "interfacial residue number": {
+        "model_1_multimer_v2_p1_220812_279106": 57,
+        "model_1_multimer_v2_p1_220812_279106_recycled_00": 54,
+        "model_1_multimer_v2_p1_220812_279106_recycled_01": 55,
+        "model_1_multimer_v2_p1_220812_279106_recycled_02": 55,
+        "model_3_multimer_v2_p1_220812_279106": 57,
+        "model_3_multimer_v2_p1_220812_279106_recycled_00": 56,
+        "model_3_multimer_v2_p1_220812_279106_recycled_01": 57,
+        "model_3_multimer_v2_p1_220812_279106_recycled_02": 57
+    },
+    "interficial contact number": {
+        "model_1_multimer_v2_p1_220812_279106": 70,
+        "model_1_multimer_v2_p1_220812_279106_recycled_00": 65,
+        "model_1_multimer_v2_p1_220812_279106_recycled_01": 68,
+        "model_1_multimer_v2_p1_220812_279106_recycled_02": 68,
+        "model_3_multimer_v2_p1_220812_279106": 71,
+        "model_3_multimer_v2_p1_220812_279106_recycled_00": 67,
+        "model_3_multimer_v2_p1_220812_279106_recycled_01": 71,
+        "model_3_multimer_v2_p1_220812_279106_recycled_02": 70
+    },
+    "iptm+ptm": {
+        "model_1_multimer_v2_p1_220812_279106": 0.8949,
+        "model_3_multimer_v2_p1_220812_279106": 0.8844
+    },
+    "iterations": {
+        "model_1_multimer_v2_p1_220812_279106": 3,
+        "model_3_multimer_v2_p1_220812_279106": 3
+    },
+    "model_preset": "multimer_np",
+    "msa_pairing": "all",
+    "order": [
+        "model_1_multimer_v2_p1_220812_279106",
+        "model_1_multimer_v2_p1_220812_279106_recycled_02",
+        "model_1_multimer_v2_p1_220812_279106_recycled_01",
+        "model_3_multimer_v2_p1_220812_279106",
+        "model_3_multimer_v2_p1_220812_279106_recycled_02",
+        "model_3_multimer_v2_p1_220812_279106_recycled_01",
+        "model_1_multimer_v2_p1_220812_279106_recycled_00",
+        "model_3_multimer_v2_p1_220812_279106_recycled_00"
+    ],
+    "pitms": {
+        "model_1_multimer_v2_p1_220812_279106": 0.7604,
+        "model_1_multimer_v2_p1_220812_279106_recycled_00": 0.7069,
+        "model_1_multimer_v2_p1_220812_279106_recycled_01": 0.7381,
+        "model_1_multimer_v2_p1_220812_279106_recycled_02": 0.746,
+        "model_3_multimer_v2_p1_220812_279106": 0.744,
+        "model_3_multimer_v2_p1_220812_279106_recycled_00": 0.7277,
+        "model_3_multimer_v2_p1_220812_279106_recycled_01": 0.7392,
+        "model_3_multimer_v2_p1_220812_279106_recycled_02": 0.741
+    },
+    "plddts": {
+        "model_1_multimer_v2_p1_220812_279106": 94.63,
+        "model_1_multimer_v2_p1_220812_279106_recycled_00": 93.08,
+        "model_1_multimer_v2_p1_220812_279106_recycled_01": 94.04,
+        "model_1_multimer_v2_p1_220812_279106_recycled_02": 94.29,
+        "model_3_multimer_v2_p1_220812_279106": 94.21,
+        "model_3_multimer_v2_p1_220812_279106_recycled_00": 93.01,
+        "model_3_multimer_v2_p1_220812_279106_recycled_01": 93.57,
+        "model_3_multimer_v2_p1_220812_279106_recycled_02": 94.03
+    },
+    "ptms": {
+        "model_1_multimer_v2_p1_220812_279106": 0.9069,
+        "model_1_multimer_v2_p1_220812_279106_recycled_00": 0.8915,
+        "model_1_multimer_v2_p1_220812_279106_recycled_01": 0.9041,
+        "model_1_multimer_v2_p1_220812_279106_recycled_02": 0.9047,
+        "model_3_multimer_v2_p1_220812_279106": 0.9003,
+        "model_3_multimer_v2_p1_220812_279106_recycled_00": 0.8915,
+        "model_3_multimer_v2_p1_220812_279106_recycled_01": 0.8966,
+        "model_3_multimer_v2_p1_220812_279106_recycled_02": 0.8983
+    },
+    "ranking_metric": "pTM",
+    "timings": {
+        "features": 0.1,
+        "predict_and_compile_model_1_multimer_v2_p1_220812_279106": 142.1,
+        "predict_and_compile_model_3_multimer_v2_p1_220812_279106": 98.6,
+        "process_features_model_1_multimer_v2_p1_220812_279106": 0.0,
+        "process_features_model_3_multimer_v2_p1_220812_279106": 0.0
+    },
+    "tol_values": {
+        "model_1_multimer_v2_p1_220812_279106": 0.102,
+        "model_1_multimer_v2_p1_220812_279106_recycled_00": Infinity,
+        "model_1_multimer_v2_p1_220812_279106_recycled_01": 25.26,
+        "model_1_multimer_v2_p1_220812_279106_recycled_02": 0.26,
+        "model_3_multimer_v2_p1_220812_279106": 0.121,
+        "model_3_multimer_v2_p1_220812_279106_recycled_00": Infinity,
+        "model_3_multimer_v2_p1_220812_279106_recycled_01": 25.19,
+        "model_3_multimer_v2_p1_220812_279106_recycled_02": 0.31
+    }
+}

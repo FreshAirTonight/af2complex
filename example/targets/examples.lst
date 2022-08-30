@@ -1,0 +1,10 @@
+#model_name model_preset MSA_mode
+*model_1_multimer_v2,model_3_multimer_v2 multimer_np all
+##Target(components) Size(AAs) Name(for output)
+T1065s1/T1065s2 225 H1065
+
+*model_1_ptm monomer_ptm
+T1072s1:2/T1072s2:2 340 H1072
+
+*model_3_multimer_v2 multimer_np
+T1065s1/T1065s2+T1072s1:2/T1072s2:2 595 H1072_H1065

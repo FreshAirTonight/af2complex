@@ -355,3 +355,26 @@ def from_prediction(
       residue_index=residue_indices + 1,
       chain_index=chain_index,
       b_factors=b_factors)
+
+
+def from_relaxation(
+    relaxed_pdb_str: str,
+    residue_index: np.ndarray ) -> Protein:
+  """Amber relaxation procedure renames residue ids starting from 1.
+  Since we may have cropped domains, we must fix residue indexes with correct ones.
+
+  Args:
+    relaxed_prot: a protein instance
+    residue_index: Desired residue indexes.
+
+  Returns:
+    PDB strings.
+  """
+  relaxed_prot = from_pdb_string( relaxed_pdb_str )
+  return Protein(
+      aatype=relaxed_prot.aatype,
+      atom_positions=relaxed_prot.atom_positions,
+      atom_mask=relaxed_prot.atom_mask,
+      residue_index=residue_index,
+      chain_index=relaxed_prot.chain_index,
+      b_factors=relaxed_prot.b_factors)
