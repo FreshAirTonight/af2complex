@@ -48,6 +48,10 @@ max_recycles=8
 # for use with checkpoint_tag that enables checkpoint saving
 ckpt_tag=ckpt
 
+# use unfied memory on a multi-gpu node to tackle a large target
+export TF_FORCE_UNIFIED_MEMORY=1
+export XLA_PYTHON_CLIENT_MEM_FRACTION=4   # preallocate memory of this number x 1 GPU memory
+
 
 # AF2Complex source code directory
 af_dir=../src
