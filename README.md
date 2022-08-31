@@ -6,9 +6,9 @@ Accurate descriptions of protein-protein interactions are essential for understa
 In a nutshell, AF2Complex is an enhanced version of AlphaFold with many features useful for real-world application scenarios, especially for the prediction of a protein complex, either on a personal computer, on a supercomputer, or in a computing cloud. Its initial development is based on AlphaFold [version v2.0.1](https://github.com/deepmind/alphafold/releases/tag/v2.0.1),
 released by DeepMind in July 2021. After DeepMind released AlphaFold-Multimer [version v2.1.1](https://github.com/deepmind/alphafold/releases/tag/v2.1.1) in November 2021, AF2Complex has been updated to support the sets of multimer deep learning models released later on. Details of our development, including large-scale  performance evaluations and exemplary applications, have been described in [this publication](https://www.nature.com/articles/s41467-022-29394-2).
 
-In [a recent work](https://doi.org/10.1101/2022.08.25.505253), we further demonstrate how to use AF2complex to conduct a large-scale virutal screening to discover novel protein-protein interactions. Using *E. coli* envelopome (all proteins within the cell envelope) as the screening library, AF2Complex was applied to a few proteins from the outer membrane biogenesis pathway. Unexpected protein-protein interactions with profound implication was revealed.
+In [a recent work](https://doi.org/10.1101/2022.08.25.505253), we further demonstrate how to use AF2complex to conduct a large-scale virutal screening to discover novel protein-protein interactions. Using *E. coli* envelopome (all proteins within the cell envelope) as the screening library, AF2Complex was applied to a few proteins from the outer membrane biogenesis pathway. Unexpected protein-protein interactions with profound implication were revealed.
 
-You may test run AF2Complex or explore protein-protein interactions within the *E. coli* proteome in Google Cloud using **[this colab notebook](https://colab.research.google.com/drive/1kqyFrJtBp6jr3YP5jnNWg8Frt9OO9QXj?usp=sharing)**.
+You may test examples runs of AF2Complex or explore protein-protein interactions within the *E. coli* proteome in Google Cloud using **[this colab notebook](https://colab.research.google.com/drive/1kqyFrJtBp6jr3YP5jnNWg8Frt9OO9QXj?usp=sharing)**.
 
 
 ## Updates and Features
