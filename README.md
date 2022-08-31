@@ -8,7 +8,7 @@ released by DeepMind in July 2021. After DeepMind released AlphaFold-Multimer [v
 
 In [a recent work](https://doi.org/10.1101/2022.08.25.505253), we further demonstrate how to use AF2complex to conduct a large-scale virutal screening to discover novel protein-protein interactions. Using *E. coli* envelopome (all proteins within the cell envelope) as the screening library, AF2Complex was applied to a few proteins from the outer membrane biogenesis pathway. Unexpected protein-protein interactions with profound implication were revealed.
 
-You may test examples runs of AF2Complex or explore protein-protein interactions within the *E. coli* proteome in Google Cloud using **[this colab notebook](https://colab.research.google.com/drive/1kqyFrJtBp6jr3YP5jnNWg8Frt9OO9QXj?usp=sharing)**.
+You may test examples of AF2Complex or explore protein-protein interactions within the *E. coli* proteome in Google Cloud using **[this colab notebook](https://colab.research.google.com/drive/1kqyFrJtBp6jr3YP5jnNWg8Frt9OO9QXj?usp=sharing)**.
 
 
 ## Updates and Features
