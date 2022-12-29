@@ -6,7 +6,7 @@ Accurate descriptions of protein-protein interactions are essential for understa
 In a nutshell, AF2Complex is an enhanced version of AlphaFold with many features useful for real-world application scenarios, especially for the prediction of a protein complex, either on a personal computer, on a supercomputer, or in a computing cloud. Its initial development is based on AlphaFold [version v2.0.1](https://github.com/deepmind/alphafold/releases/tag/v2.0.1),
 released by DeepMind in July 2021. After DeepMind released AlphaFold-Multimer [version v2.1.1](https://github.com/deepmind/alphafold/releases/tag/v2.1.1) in November 2021, AF2Complex has been updated to support the sets of multimer deep learning models released later on. Details of our development, including large-scale  performance evaluations and exemplary applications, have been described in [this publication](https://www.nature.com/articles/s41467-022-29394-2).
 
-In [a recent work](https://doi.org/10.1101/2022.08.25.505253), we further demonstrate how to use AF2complex to conduct a large-scale virutal screening to discover novel protein-protein interactions. Using *E. coli* envelopome (all proteins within the cell envelope) as the screening library, AF2Complex was applied to a few proteins from the outer membrane biogenesis pathway. Unexpected protein-protein interactions with profound implication were revealed.
+In [a recent work](https://elifesciences.org/articles/82885), we further demonstrate how to use AF2complex to conduct a large-scale virutal screening to discover novel protein-protein interactions. Using *E. coli* envelopome (all proteins within the cell envelope) as the screening library, AF2Complex was applied to a few proteins from the outer membrane biogenesis pathway. Unexpected protein-protein interactions with profound implication were revealed.
 
 You may test examples of AF2Complex or explore protein-protein interactions within the *E. coli* proteome in Google Cloud using **[this colab notebook](https://colab.research.google.com/drive/1kqyFrJtBp6jr3YP5jnNWg8Frt9OO9QXj?usp=sharing)**.
 
@@ -117,7 +117,7 @@ Optionally, you may run a MD minimization to reduce clashes (if exist) in "un-re
 - AF2Complex predicts direct physical interactions in multimeric proteins with deep learning. Mu Gao, Davi Nakajima An, Jerry M. Parks, and Jeffrey Skolnick.
 [Nature Communications **13**:1744](https://www.nature.com/articles/s41467-022-29394-2) (2022).
 
-- Deep learning-driven insights into super protein complexes for outer membrane protein biogenesis in bacteria.  Mu Gao, Davi Nakajima An, and Jeffrey Skolnick. [bioRxiv, 2022.08.25.505253](https://doi.org/10.1101/2022.08.25.505253) (2022).
+- Deep learning-driven insights into super protein complexes for outer membrane protein biogenesis in bacteria.  Mu Gao, Davi Nakajima An, and Jeffrey Skolnick. [eLife, **11**: e82885](https://elifesciences.org/articles/82885) (2022).
 
 - Proteome-scale deployment of protein structure prediction workflows on the Summit supercomputer. Mu Gao, Mark Coletti, et.al., HiCOMB 2022, [arXiv, 2201.10024](https://arxiv.org/abs/2201.10024) (2022).
 
