@@ -13,6 +13,11 @@ You may test examples of AF2Complex or explore protein-protein interactions with
 
 ## Updates and Features
 
+#### Version 1.4.0 (2023-01-29)
+
+- Support AF-Multimer v3 multimer models (based on AF v2.3.1)
+- More options for input feature generation
+
 #### Version 1.3.0 (2022-08-30)
 
 - Google Colab notebook access

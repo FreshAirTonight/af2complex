@@ -1,4 +1,4 @@
 ##Target(components) Size(AAs) Name(for output)
 #T1065s1/T1065s2 225 H1065
-T1072s1:2+T1072s2:2 340 H1072  ./H1072_adj_list.txt
-#T1060s3:12 1680 H1060v4
+#T1072s1:2+T1072s2:2 340 H1072  ./H1072_adj_list.txt
+T1060s3:12 1680 H1060v4

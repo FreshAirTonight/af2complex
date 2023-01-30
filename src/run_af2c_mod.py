@@ -20,7 +20,7 @@
 #
 # Note: AF2Complex is a modified, enhanced version of AlphaFold 2.
 # Mu Gao and Davi Nakajima An
-# Georgia Institute of Technology, 2021-2022
+# Georgia Institute of Technology, 2021-2023
 #
 """AF2Complex: protein complex structure prediction with deep learning"""
 import json
@@ -116,6 +116,10 @@ flags.DEFINE_enum('msa_pairing', None,
 flags.DEFINE_boolean('do_cluster_analysis', False, 'Whether to print out clusters of protein chains in the prediction')
 flags.DEFINE_integer('cluster_edge_thres', 10, 'The number of contacts between chains that constitute an edge in the '
                   'cluster analysis', lower_bound=0)
+flags.DEFINE_float('pdb_iscore_cf', -1.0, 'If interface icore is present, only write the pdb of the structural model '
+                    'if the iScore is larger than this cutoff value. Useful for large-scale screening. ')
+flags.DEFINE_boolean('allow_dropout', False, 'Allow dropout during model inference. This is an experimental feature. '
+                     'Default is disabled.')
 
 FLAGS = flags.FLAGS
 
@@ -274,7 +278,7 @@ def predict_structure(
       # Get mean pLDDT confidence metric.
       plddt = np.mean(result['plddt'])
       plddts[log_model_name] = round(plddt, 2)
-      ptm = 0
+      ptm = 0; iptm = 0
       if 'ptm' in result:
           ptm = result['ptm'].tolist()
           ptms[log_model_name] = round(ptm, 4)
@@ -299,16 +303,20 @@ def predict_structure(
           print(f"Info: {target_name} {log_model_name}, ",
             f"tol = {tol:5.2f}, pLDDT = {plddt:.2f}, pTM-score = {ptm:.4f}", end='')
           if len(monomers) > 1 or monomers[0]['copy_number'] > 1: # hetero- or homo-oligomer target
-            print(f", piTM-score = {pitm:.4f}, interface-score = {inter_sc:.4f}", end='')
-            print(f", iRes = {inter_residues:<4d} iCnt = {inter_contacts:<4.0f}")
+            print(f", piTM-score = {pitm:.4f}, interface-score = {inter_sc:.4f}",
+              f", iRes = {inter_residues:<4d} iCnt = {inter_contacts:<4.0f}")
           else:
             print('')
       else:
           print(f"Info: {target_name} {log_model_name} performed {tot_recycle} recycles,",
-            f"final tol = {tol_value:.2f}, pLDDT = {plddt:.2f}, pTM-score = {ptm:.4f}", end='')
-          if len(monomers) > 1 or monomers[0]['copy_number'] > 1:
-            print(f", piTM-score = {pitm:.4f}, interface-score = {inter_sc:.4f}", end='')
-            print(f", iRes = {inter_residues:<4d} iCnt = {inter_contacts:<4.0f}")
+            f"final tol = {tol_value:.2f}, pLDDT = {plddt:.2f}", end='')
+          if 'iptm+ptm' in result:
+              print(f", iptm+ptm = {iptm:.4f}", end='')
+          else:
+              print(f", pTM-score = {ptm:.4f}", end='')
+          if len(monomers) > 1 or monomers[0]['copy_number'] > 1:            
+            print(f", piTM-score = {pitm:.4f}, interface-score = {inter_sc:.4f}",
+                f", iRes = {inter_residues:<4d} iCnt = {inter_contacts:<4.0f}")
             if 'cluster_analysis' in result:
               clus_res = result['cluster_analysis']
               idx2chain_name = get_asymid2chain_name(target)
@@ -326,12 +334,13 @@ def predict_structure(
             print('')
 
       # Save the model outputs, not saving pkl for intermeidate recycles to save storage space
-      if (recycle_index == tot_recycle and flags.output_pickle) or FLAGS.save_recycled == 3:
+      # skip saving pkl if iScore less than the specified cutoff
+      if ((recycle_index == tot_recycle and flags.output_pickle) or FLAGS.save_recycled == 3) and inter_sc > FLAGS.pdb_iscore_cf:
           result_output_path = os.path.join(out_dir, f'{log_model_name}.pkl')
           with open(result_output_path, 'wb') as f:
               pickle.dump(result, f, protocol=4)
 
-      if recycle_index == tot_recycle or FLAGS.save_recycled >= 2:
+      if (recycle_index == tot_recycle or FLAGS.save_recycled >= 2) and inter_sc > FLAGS.pdb_iscore_cf:
           # Set the b-factors to the per-residue plddt
           final_atom_mask = result['structure_module']['final_atom_mask']
           b_factors = result['plddt'][:, None] * final_atom_mask
@@ -468,6 +477,11 @@ def main(argv):
       model_config.model.num_recycle = max_recycles
       model_config.model.recycle_tol = recycle_tol
       model_config.model.save_recycled = FLAGS.save_recycled
+
+      # allow drop out for model inference, this is an advanced feature only for expert users
+      if FLAGS.allow_dropout:
+          print("Info: allow dropout for model inference")
+          model_config.model.global_config.eval_dropout = True
 
       model_params = data.get_model_haiku_params(
           model_name=model_name, data_dir=FLAGS.data_dir)

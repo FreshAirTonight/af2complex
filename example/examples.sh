@@ -19,7 +19,7 @@ out_dir=af2c_mod # model output directory, s.t. output files will be on $out_dir
 preset=economy # up to 3 recycles, 1 ensemble.
 
 # these two options can be overwritten in examples.lst
-model=model_1_multimer_v2
+model=model_1_multimer_v3
 model_preset=multimer_np
 
 

@@ -11,6 +11,7 @@ import os
 import pickle
 import re
 import time
+import json
 
 from absl import app
 from absl import flags
@@ -78,7 +79,8 @@ def main(argv):
     output_dir = os.path.join(FLAGS.output_dir, target_name)
     if not os.path.exists(output_dir):
       os.makedirs(output_dir)
-
+  
+    relax_metrics = {}
     for afile in os.listdir(input_dir):
       # find all unrelaxed pdb files, ignore ones with 'relaxed' as prefix
       if not afile.endswith(".pdb") or afile.startswith("relaxed_"):
@@ -96,6 +98,11 @@ def main(argv):
         # Relax the prediction.
         t_0 = time.time()
         relaxed_pdb_str, log, _ = amber_relaxer.process(prot=unrelaxed_protein)
+        relaxed_pdb_str, _, violations = amber_relaxer.process(prot=unrelaxed_protein)
+        relax_metrics[f'relaxed_{unrelaxed_pdb_file}'] = {
+            'remaining_violations': violations,
+            'remaining_violations_count': sum(violations)
+        }       
         relaxation_time = time.time() - t_0
 
         # Fix residue index, and ignore hydrogen atoms
@@ -107,7 +114,12 @@ def main(argv):
         with open(relaxed_output_path, 'w') as f:
           f.write(relaxed_pdb_str)
 
-        logging.info(f"{target_name} relaxation done, time spent {relaxation_time:.1f} seconds, Efinal {log['final_energy']:.2f}, rmsd {log['rmsd']:.2f}")
+        logging.info(f"{target_name} relaxation done, time spent {relaxation_time:.1f} seconds, "
+            f"Efinal {log['final_energy']:.2f}, rmsd {log['rmsd']:.2f}")
+
+    relax_metrics_path = os.path.join(output_dir, 'relax_metrics.json')
+    with open(relax_metrics_path, 'w') as f:
+      f.write(json.dumps(relax_metrics, indent=4))
 
 if __name__ == '__main__':
   flags.mark_flags_as_required([

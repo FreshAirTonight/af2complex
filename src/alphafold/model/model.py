@@ -67,7 +67,6 @@ def get_confidence_metrics(
     confidence_metrics['pitm'] = confidence.predicted_interface_tm_score(
         np.asarray(prediction_result['predicted_aligned_error']['logits']),
         np.asarray(prediction_result['predicted_aligned_error']['breaks']),
-        # np.asarray(residue_index),
         np.asarray(prediction_result['structure_module']['final_atom_positions']),
         np.asarray(prediction_result['structure_module']['final_atom_mask']),
         np.asarray(prediction_result['predicted_aligned_error']['asym_id']),
@@ -187,7 +186,7 @@ class RunModel:
     logging.info('Output shape was %s', shape)
     return shape
 
-  def predict(self, feat: features.FeatureDict, random_seed=0,
+  def predict(self, feat: features.FeatureDict, random_seed: int,
             prev=None, prev_ckpt_iter=0, asym_id_list=None, asym_id=None, 
             edge_contacts_thres=10) -> Mapping[str, Any]:
     """Makes a prediction by inferencing the model on the provided features.
@@ -196,7 +195,7 @@ class RunModel:
       feat: A dictionary of NumPy feature arrays as output by
         RunModel.process_features.
       random_seed: The random seed to use when running the model. In the
-        multimer model this controls the MSA sampling
+        multimer model this controls the MSA sampling.
 
     Returns:
       A dictionary of model outputs.
@@ -258,12 +257,14 @@ class RunModel:
 
     if self.config.model.save_recycled:
       *_, recycled_info = recycles
-      structs = recycled_info['atom_positions']
-      structs_masks = recycled_info['atom_mask']
-      plddt = recycled_info['plddt']
-      palign_logits = recycled_info['pred_aligned_error_logits']
-      palign_break = recycled_info['pred_aligned_error_breaks']
-      tol_values = recycled_info['tol_values']
+     # must convert jax array to np array, otherwise some interplay between
+     # jax array and the loops in the AF2Complex metric functions dramatically slow downs the calculations     
+      structs = np.asarray(recycled_info['atom_positions'])
+      structs_masks = np.asarray(recycled_info['atom_mask'])
+      plddt = np.asarray(recycled_info['plddt'])
+      palign_logits = np.asarray(recycled_info['pred_aligned_error_logits'])
+      palign_break = np.asarray(recycled_info['pred_aligned_error_breaks'])
+      tol_values = np.asarray(recycled_info['tol_values'])
       recycled_info_ = []
 
       for i, (s, m, p, a_logits, a_break, tol_val) in enumerate(zip(
@@ -283,7 +284,6 @@ class RunModel:
           "pitm": confidence.predicted_interface_tm_score(
             a_logits,
             a_break,
-            # res_index,
             s,
             m,
             asym_id,

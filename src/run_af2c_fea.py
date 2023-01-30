@@ -40,6 +40,7 @@ from alphafold.common import protein
 from alphafold.common import residue_constants
 from alphafold.data import pipeline
 from alphafold.data import pipeline_multimer
+from alphafold.data import pipeline_uniprot
 from alphafold.data import templates
 from alphafold.data.tools import hhsearch
 from alphafold.data.tools import hmmsearch
@@ -98,14 +99,16 @@ flags.DEFINE_string('obsolete_pdbs_path', None, 'Path to file containing a '
                     'mapping from obsolete PDB IDs to the PDB IDs of their '
                     'replacements.')
 flags.DEFINE_enum('db_preset', 'reduced_dbs',
-                  ['full_dbs', 'reduced_dbs'],
+                  ['full_dbs', 'reduced_dbs', 'uniprot'],
                   'Choose preset MSA database configuration - '
                   'smaller genetic database config (reduced_dbs) or '
-                  'full genetic database config  (full_dbs)')
+                  'full genetic database config  (full_dbs) or '
+                  'only uniprot database plus pdb (uniprot)')
 flags.DEFINE_enum('feature_mode', 'monomer',
-                  ['monomer', 'monomer+species', 'multimer'],
+                  ['monomer', 'monomer+species', 'monomer+fullpdb', 'multimer'],
                   'Choose the mode of output feature sets - for monomer prediction, '
-                  'monomer plus species ids (for customized pairing later), and '
+                  'monomer plus species ids (for customized pairing later), '
+                  'monomer using full pdb (instead of pdb70) plus species id, and '
                   'for multimer prediction using the default MSA pairing')
 flags.DEFINE_integer('random_seed', None, 'The random seed for the data '
                      'pipeline. By default, this is randomly generated. Note '
@@ -182,21 +185,24 @@ def main(argv):
       raise ValueError(f'Could not find path to the "{tool_name}" binary. Make '
                        'sure it is installed on your system.')
 
-  use_small_bfd = FLAGS.db_preset == 'reduced_dbs'
-  _check_flag('small_bfd_database_path', 'db_preset',
-              should_be_set=use_small_bfd)
-  _check_flag('bfd_database_path', 'db_preset',
-              should_be_set=not use_small_bfd)
-  _check_flag('uniclust30_database_path', 'db_preset',
-              should_be_set=not use_small_bfd)
+  if FLAGS.db_preset != 'uniprot':
+      use_small_bfd = FLAGS.db_preset == 'reduced_dbs'
+      _check_flag('small_bfd_database_path', 'db_preset',
+                  should_be_set=use_small_bfd)
+      _check_flag('bfd_database_path', 'db_preset',
+                  should_be_set=(FLAGS.db_preset == 'full_dbs'))
+      _check_flag('uniclust30_database_path', 'db_preset',
+                  should_be_set=(FLAGS.db_preset == 'full_dbs'))
 
   run_multimer_system = 'multimer' in FLAGS.feature_mode
-  add_species = 'species' in FLAGS.feature_mode
+  add_species = any(x in FLAGS.feature_mode for x in ['species', 'fullpdb'])
   print(f"add_species is {add_species}")
   _check_flag('pdb70_database_path', 'feature_mode',
-              should_be_set=not run_multimer_system)
+              should_be_set=not (run_multimer_system
+                or 'fullpdb' in FLAGS.feature_mode))
   _check_flag('pdb_seqres_database_path', 'feature_mode',
-              should_be_set=run_multimer_system)
+              should_be_set=(run_multimer_system
+                        or 'fullpdb' in FLAGS.feature_mode))
   _check_flag('uniprot_database_path', 'feature_mode',
          should_be_set=(run_multimer_system or add_species))
 
@@ -206,7 +212,7 @@ def main(argv):
     raise ValueError('All FASTA paths must have a unique basename.')
 
 
-  if run_multimer_system:
+  if run_multimer_system or 'fullpdb' in FLAGS.feature_mode:
     template_searcher = hmmsearch.Hmmsearch(
         binary_path=FLAGS.hmmsearch_binary_path,
         hmmbuild_binary_path=FLAGS.hmmbuild_binary_path,
@@ -235,7 +241,8 @@ def main(argv):
   # else:
   #   mono_uniprot_database_path = FLAGS.uniref90_database_path
 
-  monomer_data_pipeline = pipeline.DataPipeline(
+  if FLAGS.db_preset != 'uniprot':
+    monomer_data_pipeline = pipeline.DataPipeline(
       jackhmmer_binary_path=FLAGS.jackhmmer_binary_path,
       hhblits_binary_path=FLAGS.hhblits_binary_path,
       uniref90_database_path=FLAGS.uniref90_database_path,
@@ -247,6 +254,15 @@ def main(argv):
       template_searcher=template_searcher,
       template_featurizer=template_featurizer,
       use_small_bfd=use_small_bfd,
+      use_precomputed_msas=FLAGS.use_precomputed_msas,
+      add_species=add_species)
+  else:
+    monomer_data_pipeline = pipeline_uniprot.DataPipeline(
+      jackhmmer_binary_path=FLAGS.jackhmmer_binary_path,
+      hhblits_binary_path=FLAGS.hhblits_binary_path,
+      uniprot_database_path=FLAGS.uniprot_database_path,
+      template_searcher=template_searcher,
+      template_featurizer=template_featurizer,
       use_precomputed_msas=FLAGS.use_precomputed_msas,
       add_species=add_species)
 

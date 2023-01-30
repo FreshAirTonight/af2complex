@@ -396,7 +396,7 @@ def interface_score(
     atom_mask: np.ndarray,
     asym_id: np.ndarray,
     residue_weights: Optional[np.ndarray] = None,
-    distance_threshold: Optional[int] = 4.5,
+    distance_threshold: Optional[float] = 4.5,
     is_probs: Optional[bool] = False,) -> Dict[str, Union[np.ndarray, int]]:
   """ Returns the interface-score, number of residues in the interface, and
     number of contacts of a complex model. This is a further tweak from piTM by

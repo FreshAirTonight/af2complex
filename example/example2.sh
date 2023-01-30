@@ -18,7 +18,7 @@ out_dir=af2c_mod # model output files will be under $out_dir/$target
 ### This preset defined the number of recycles, ensembles, MSA cluster sizes (for monomer_ptm models)
 preset=economy  # up to 3 recycles, 1 ensemble.
 
-### Choose neural network model(s) from ['model_1/2/3/4/5_multimer', 'model_1/2/3/4/5_multimer_v2', or 'model_1/2/3/4/5_ptm']
+### Choose neural network model(s) from ['model_1/2/3/4/5_multimer_v3', 'model_1/2/3/4/5_multimer_v2', or 'model_1/2/3/4/5_ptm']
 # Using AF2 monomer_ptm model released in alphafold2 version 2.0.1
 model=model_1_ptm,model_3_ptm
 

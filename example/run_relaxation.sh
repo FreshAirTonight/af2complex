@@ -19,3 +19,4 @@ python -u $af_dir/run_af2c_min.py \
   --target_lst_path=$target_lst_file \
   --output_dir=$out_dir \
   --input_dir=$inp_dir \
+  --use_gpu_relax

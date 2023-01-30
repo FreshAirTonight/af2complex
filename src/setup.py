@@ -18,7 +18,7 @@ from setuptools import setup
 
 setup(
     name='alphafold',
-    version='2.0.0',
+    version='2.3.1',
     description='An implementation of the inference pipeline of AlphaFold v2.0.'
     'This is a completely new model that was entered as AlphaFold2 in CASP14 '
     'and published in Nature.',
@@ -38,10 +38,14 @@ setup(
         'jax',
         'ml-collections',
         'numpy',
+        'pandas',
         'scipy',
-        'tensorflow',
+        'tensorflow-cpu',
     ],
-    tests_require=['mock'],
+    tests_require=[
+        'matplotlib',  # For notebook_utils_test.
+        'mock',
+    ],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Science/Research',
@@ -49,6 +53,9 @@ setup(
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'Topic :: Scientific/Engineering :: Artificial Intelligence',
     ],
 )

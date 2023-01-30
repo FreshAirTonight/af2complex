@@ -16,12 +16,12 @@ out_dir=af2c_mod # model output directory, $out_dir/$target
 ### This preset defined the number of recycles, ensembles, MSA cluster sizes (for monomer_ptm models)
 preset=super   # up to 20 recycles, 1 ensemble.
 
-### Choose neural network model(s) from ['model_1/2/3/4/5_multimer', 'model_1/2/3/4/5_multimer_v2', or 'model_1/2/3/4/5_ptm']
+### Choose neural network model(s) from ['model_1/2/3/4/5_multimer_v3', 'model_1/2/3/4/5_multimer_v2', or 'model_1/2/3/4/5_ptm']
 # Using AF2 multimer model released in version 2.1.1
 #model=model_1_multimer,model_2_multime,rmodel_3_multimer,model_4_multimer,model_5_multimer
 # Using AF2 multimer model released in version 2.2.0
-#model=model_1_multimer_v2,model_2_multime_v2,rmodel_3_multimer_v2,model_4_multimer_v2,model_5_multimer_v2
-model=model_1_multimer_v2,model_2_multimer_v2
+#model=model_1_multimer_v3,model_2_multime_v3,rmodel_3_multimer_v3,model_4_multimer_v3,model_5_multimer_v3
+model=model_1_multimer_v3,model_2_multimer_v3
 # Using AF2 monomer_ptm model released in version 2.0.1
 #model=model_1_ptm,model_2_ptm,model_3_ptm,model_4_ptm,model_5_ptm
 
