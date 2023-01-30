@@ -5,10 +5,10 @@ We show how to run AF2Complex to predict the structures of three multimeric prot
 It is recommended to use a computer with a modern GPU (e.g., Nvidia RTX, V100, A100)
 to test these examples because of fast result turnaround within minutes, except for Example 4 (which takes about 35 minutes on an A100 machine). But with patience you should be able to complete these examples on a modern CPU computer as well.
 
-Before running these examples, please ensure that correct environment for AF2Complex has been properly set up. To do so, use a text editor to open an example shell script, and modify it accordingly. As instructed in the script, you must provide the correct conda environment of AlphaFold, if not already loaded; and provide the correct path to the weight parameter files of AlphaFold 2 neural network models. In AF's releases, these model parameters are named as `params_model_x_ptm.npz` (AF version 2.0.x), `params_model_x_multimer.npz` (AF version 2.1.x), and `params_model_x_multimer_v2.npz` (AF version 2.2.x). In the examples below, we employ two sets of parameters released in AF v2.0 and v2.2.
+Before running these examples, please ensure that correct environment for AF2Complex has been properly set up. To do so, use a text editor to open an example shell script, and modify it accordingly. As instructed in the script, you must provide the correct conda environment of AlphaFold, if not already loaded; and provide the correct path to the weight parameter files of [AlphaFold 2 neural network models](https://storage.googleapis.com/alphafold/alphafold_params_2022-12-06.tar). In AF's releases, these model parameters are named as `params_model_x_ptm.npz` (AF version 2.0.x), `params_model_x_multimer.npz` (AF version 2.1.x), `params_model_x_multimer_v2.npz` (AF version 2.2.x), and `params_model_x_multimer_v3.npz` (AF version 2.3.x). In the examples below, we employ two sets of parameters released in AF v2.0 and v2.3.
 
 ### Example 1
-Predicting the structure of a heterodimer (H1065) using two AF-Multimer v2 DL models. In this example, the target is composed of two monomers (T1065s1 and T1065s2). AF2Complex first retrieves the input features of each monomer under the subdirectory `af2c_fea`, then pairs their MSAs using the MSA pairing option `all`. The example has two files,
+Predicting the structure of a heterodimer (H1065) using two AF-Multimer DL models. In this example, the target is composed of two monomers (T1065s1 and T1065s2). AF2Complex first retrieves the input features of each monomer under the sub-directory `af2c_fea`, then pairs their MSAs using the MSA pairing option `all`. The example has two files,
 
 - `example1.sh` The shell script to run AF2Complex model inference.
 - `targets/example1.lst` The list file that defines the stoichiometry of the target.
@@ -18,7 +18,7 @@ Run the script with the command,
 ./example1.sh
 ```
 
-This run uses two `multimer_v2` models to make complex structure prediction. The output structural models (in PDB format) are under the subdirectory `af2c_mod/H1065`. For the purpose of comparison, the experimental structures of these two examples are provided under subdirectory `ground_truth`.
+This run uses two `multimer_v3` models to make complex structure prediction. The output structural models (in PDB format) are under the subdirectory `af2c_mod/H1065`. For the purpose of comparison, the experimental structures of these two examples are provided under subdirectory `ground_truth`.
 You may also view the experimental structure of this target directly in the
 [Protein Data Bank](https://www.rcsb.org/structure/7m5f).
 
@@ -63,7 +63,7 @@ Run the script with the command,
 ```sh
 ./example4.sh
 ```
-As of Aug 2022, the expreimental structure of this target have not been released. But it is known that the target structure is a [circular ring](https://predictioncenter.org/casp14/showpdbimage.cgi?target=H1060v4). The cyclic MSA mode provided by AF2Complex gives you a better chance to obtain such a ring-like structure, see an example output under `af2c_mod_examples/H1060v4`. It may take several tries to get it, and you may also see an ellipse structure or multiple rings. You may also try multimer v2 models with or without the cyclic MSA mode, or multimer v1 models in the unpaired MSA mode. Note that the radius of these circular rings resulted from different models may not be the same in this challenging example.
+As of Aug 2022, the expreimental structure of this target have not been released. But it is known that the target structure is a [circular ring](https://predictioncenter.org/casp14/showpdbimage.cgi?target=H1060v4). The cyclic MSA mode provided by AF2Complex gives you a better chance to obtain such a ring-like structure, see an example output under `af2c_mod_examples/H1060v4`. It may take several tries to get it, and you may also see an ellipse structure or multiple rings. You may also try multimer v3 models with or without the cyclic MSA mode, or multimer v1 models in the unpaired MSA mode. Note that the radius of these circular rings resulted from different models may not be the same in this challenging example.
 
 ### A general model inference script
 The general script for AF2Complex model inference is provided in the script
@@ -85,13 +85,15 @@ It conducts two iScore evaluations as specified in `targets/test_iscore.lst` on 
 ## Generating input features
 If you apply this package to a new target. The first step is to generate input features. `run_fea_gen.sh` is an example shell script to derive input features for subsequent model inference. To run it, you need to first install third-party sequence tools and libraries as required by AlphaFold 2. And modify this script to reflect correct installation path for sequence alignment accordingly.
 
-There are three `feature_mode` to choose from:
+These are the `feature_mode` to choose from:
 
-- `monomer+species` Modified monomer data pipeline to include additionally species information. We recommend that you use this mode, which enables a flexibility using either unpaired MSAs or paired MSAs in various paring modes available in AF2Complex v1.3.0. The monomer features generated with these two monomer modes can be used to predict arbitrary combinations of the monomers for modeling a multimeric target.
+- `monomer+species` Modified monomer data pipeline to include additionally species information. We recommend that you use this mode, which enables a flexibility using either unpaired MSAs or paired MSAs in various paring modes available in AF2Complex. The monomer features generated with these two monomer modes can be used to predict arbitrary combinations of the monomers for modeling a multimeric target.
+
+- `monomer+fullpdb` In addition to add the species information, the template search uses the template pipeline employed for predicting multimers, instead of using the original monomer template pipeline. The advantage is that this template search covers the full PDB library.
 
 - `monomer` AF v2.0 data pipeline to generate input features for predicting monomer structures. The features generated by this option are used by AF2Complex v1.2.2 and below.
 
-- `multimer` AF v2.1 data pipeline to generate input features for predicting multimer structures. The multimer features generated by this option can only be used in combination with the "multimer" model preset. It is provided such as you can run the official DeepMind's procedure. Certain AF2Complex features, such as domain cropping, are not supported in this model preset.
+- `multimer` AF v2.2+ data pipeline to generate input features for predicting multimer structures. The multimer features generated by this option can only be used in combination with the "multimer" model preset. It is provided such that you can run the official DeepMind's procedure. Certain AF2Complex features, such as domain cropping, are not supported in this model preset.
 
 The input features used by examples above were all generated by using the option `monomer+species`.
 
