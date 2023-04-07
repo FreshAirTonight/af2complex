@@ -50,7 +50,7 @@ echo "Info: max_template_date is $max_template_date"
 ##########################################################################################
 
 
-if [ "$model_preset" = "multimer" ] || [ "$feature_mode" = "monomer+fullpdb" ]; then
+if [ "$feature_mode" = "multimer" ] || [ "$feature_mode" = "monomer+fullpdb" ]; then
   python $af_dir/run_af2c_fea.py --fasta_paths=$fasta_path --db_preset=$db_preset \
     --data_dir=$DATA_DIR --output_dir=$out_dir      \
     --uniprot_database_path=$DATA_DIR/uniprot/uniprot.fasta \

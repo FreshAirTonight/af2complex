@@ -118,14 +118,14 @@ class DataPipeline:
                uniprot_database_path: str,
                mgnify_database_path: str,
                bfd_database_path: Optional[str],
-               uniclust30_database_path: Optional[str],
+               uniref30_database_path: Optional[str],
                small_bfd_database_path: Optional[str],
                template_searcher: TemplateSearcher,
                template_featurizer: templates.TemplateHitFeaturizer,
                use_small_bfd: bool,
                mgnify_max_hits: int = 501,
                uniref_max_hits: int = 20000,
-               uniprot_max_hits: int = 50000,
+               uniprot_max_hits: int = 20000,
                use_precomputed_msas: bool = False,
                add_species: bool = False):
     """Initializes the data pipeline."""
@@ -138,9 +138,9 @@ class DataPipeline:
           binary_path=jackhmmer_binary_path,
           database_path=small_bfd_database_path)
     else:
-      self.hhblits_bfd_uniclust_runner = hhblits.HHBlits(
+      self.hhblits_bfd_uniref_runner = hhblits.HHBlits(
           binary_path=hhblits_binary_path,
-          databases=[bfd_database_path, uniclust30_database_path])
+          databases=[bfd_database_path, uniref30_database_path])
     self.jackhmmer_mgnify_runner = jackhmmer.Jackhmmer(
         binary_path=jackhmmer_binary_path,
         database_path=mgnify_database_path)
