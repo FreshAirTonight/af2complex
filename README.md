@@ -1,17 +1,21 @@
 <img src="image/af2complex_logo_hi.jpg" alt="AF2Complex Overview" width="800"/>
 
 ## Predicting and modeling protein complexes with deep learning
-Accurate descriptions of protein-protein interactions are essential for understanding biological systems. Can we predict protein-protein interactions given an arbitrary pair of protein sequences, and more generally, can we identify higher order protein complexes among an arbitrary number of protein sequences? AF2Complex was born to address this question by taking advantage of [AlphaFold](https://github.com/deepmind/alphafold), sophisticated neural network models originally designed for predicting structural models of single protein sequences by DeepMind. We extended it not only to model known protein-protein interactions, but also to predict possible interactions among multiple proteins by using the confidence of the predicted structural models. The approach can be applied to challenging scenarios such as transient interactions of membrane proteins that are difficult to capture experimentally.
+Accurate descriptions of protein-protein interactions are essential for understanding biological systems. Can we predict protein-protein interactions given an arbitrary pair of protein sequences, and more generally, can we identify higher order protein complexes among an arbitrary number of protein sequences? AF2Complex was born to address this question by taking advantage of [AlphaFold](https://github.com/deepmind/alphafold), sophisticated neural network models originally designed for predicting structural models of single protein sequences by DeepMind. We extended it not only to model known protein-protein interactions, but also to predict possible interactions among multiple proteins by using the confidence of the predicted structural models. The approach can be applied to challening senarios such as transient interactions of membrane proteins that are difficult to capture experimentally.
 
 In a nutshell, AF2Complex is an enhanced version of AlphaFold with many features useful for real-world scenarios involving protein complexes. Its initial development is based on AlphaFold [version v2.0.1](https://github.com/deepmind/alphafold/releases/tag/v2.0.1),
 released by DeepMind in July 2021. After DeepMind released AlphaFold-Multimer [version v2.1.1](https://github.com/deepmind/alphafold/releases/tag/v2.1.1) in November 2021, AF2Complex has been updated to support the multimer models released later on. Details of our initial development, including large-scale  performance evaluations and exemplary applications, have been described in [this publication](https://www.nature.com/articles/s41467-022-29394-2).
 
-In [a recent work](https://elifesciences.org/articles/82885), we further demonstrate how to use AF2complex to conduct a large-scale virutal screening to discover novel protein-protein interactions. Using *E. coli* envelopome (all proteins within the cell envelope) as the screening library, AF2Complex was applied to proteins from the outer membrane biogenesis pathway. Unexpected protein-protein interactions with profound implication were revealed.
+In [a follow-up work](https://elifesciences.org/articles/82885), we further demonstrate how to use AF2complex to conduct a large-scale virutal screening to discover novel protein-protein interactions. Using *E. coli* envelopome (all proteins within the cell envelope) as the screening library, AF2Complex was applied to proteins from the outer membrane biogenesis pathway. Unexpected protein-protein interactions with profound implication were revealed.
 
 You may test examples of AF2Complex or explore protein-protein interactions within the *E. coli* proteome in Google Cloud using **[this colab notebook](https://colab.research.google.com/github/FreshAirTonight/af2complex/blob/main/notebook/AF2Complex_notebook.ipynb)**.
 
 
 ## Updates and Features
+
+#### Version 1.4.1 (2024-04-08)
+- Option to pair MSA by top N per species or organism
+- Various experimental options and improvements
 
 #### Version 1.4.0 (2023-01-30)
 
@@ -48,11 +52,11 @@ You may test examples of AF2Complex or explore protein-protein interactions with
 
 ## Installation
 
-This package has essentially the same software dependency and hardware requirement as AlphaFold
-[version v2.3.1](https://github.com/deepmind/alphafold/releases/tag/v2.3.1).
+The latest package has essentially the same software dependency and hardware requirement as AlphaFold
+[version v2.3.2](https://github.com/deepmind/alphafold/releases/tag/v2.3.2).
 If you have installed it, only this package and an additional python module (`networkx`) is required. If you have not installed AF2, please follow its official installation guide of [AlphaFold 2](https://github.com/deepmind/alphafold) first. Note that if you just want to evaluate [the examples](./example/README.md) we provided, you do *not* need to install any sequence library or third-party sequence searching tools as the input features of the examples have been prepared for you. After resolving all python dependency required, you are (almost) good to go.
 
-The other items you need are the [AlphaFold deep neural network models](https://storage.googleapis.com/alphafold/alphafold_params_2022-12-06.tar) trained by DeepMind. Running this package requires the DL models with the TM-score prediction capability (i.e, monomer_ptm or multimer models). In AF's releases, these models are named as `params_model_x_ptm.npz` (AF version 2.0.x), `params_model_x_multimer.npz` (AF version 2.1.x), or `params_model_x_multimer_v2.npz` (AF version 2.2.x), or `params_model_x_multimer_v3.npz` (AF version 2.3.x). The examples we provided uses the original `monomer_ptm` and the most recent `multimer_v3` models, but you could use other version of multimer models as well. The installation of AlphaFold computing environment could take hours, dependent on whether you choose to do a full installation that includes all sequence libraries. Downloading these sequence and PDB template libraries are time-consuming.
+You also need the [AlphaFold deep neural network models](https://storage.googleapis.com/alphafold/alphafold_params_2022-12-06.tar) trained by DeepMind. Running this package requires the DL models with the TM-score prediction capability (i.e, monomer_ptm or multimer models). In AF's releases, these models are named as `params_model_x_ptm.npz` (AF version 2.0.x), `params_model_x_multimer.npz` (AF version 2.1.x), or `params_model_x_multimer_v2.npz` (AF version 2.2.x), or `params_model_x_multimer_v3.npz` (AF version 2.3.x). The examples we provided uses the original `monomer_ptm` and the most recent `multimer_v3` models, but you could use other version of multimer models as well. The installation of AlphaFold computing environment could take hours, dependent on whether you choose to do a full installation that includes all sequence libraries. Downloading these sequence and PDB template libraries are time-consuming.
 
 After you have set up AlphaFold 2, simply clone this repository by
 ```sh
@@ -75,9 +79,9 @@ AF2Complex version 1.3.0 and above supports reading regular or gzipped feature p
 
 After collecting the input features of monomers, you may predict a complex structure using the script ```run_af2c_mod.py```, which runs through deep learning model inference. The stoichiometry of your target, be it a monomer or a complex, is defined in an input list file. In the examples we provided, the target list files are under subdirectory `targets`. The general format of one target is defined like the follows,
 
-`A:2/B:2/C/D/E <total_length> <target_name>`
+`A:2/B:2/C/D/E <total_length> <output_name>`
 
-where the first column defines the stoichiometry of the complex, e.g., `A:2/B:2/C/D/E`, using the IDs of the individual sequences, `:<num>` after each protein defines its homo copy number, and `/` to separate distinct monomers. The IDs of monomers are also used as the name of sub-directory for locating their input features.  The second column, `<total_length>`, is the total number of amino acids of the putative complex. The length is parsed but not used by the model inference python script, it is intended for a job scheduler during batch job submission on a computing cluster. The third column, `<target_name>`, is the name of the output sub-directory for predicted structural models.
+where the first column defines the stoichiometry of the complex, e.g., `A:2/B:2/C/D/E`, using the IDs of the individual sequences, `:<num>` after each protein defines its homo copy number, and `/` to separate distinct monomers. The IDs of monomers are also used as the name of sub-directory for locating their input features.  The second column, `<total_length>`, is the total number of amino acids of the putative complex. The length is parsed but not used by the model inference python script, it is intended for a job scheduler during batch job submission on a computing cluster. The third column, `<output_name>`, is the name of the output sub-directory for predicted structural models.
 
 In the example above, the target complex is made of five protein sequences named A to E, and protein A and B each have two copies. During a prediction, the program will look for individual input features of A to E under the input feature directory, e.g, `$input_dir/A/features.pkl(.gz)`, and then assemble them into the features for complex structure prediction. If you provide only a single protein without a copy number, e.g., `A <seq_length>`, it reverts to a structural prediction of a single protein A.
 
@@ -87,7 +91,7 @@ A more advanced example that restricts modeling to certain domains within a sequ
 
 where the residue ranges, 19 to 200 and 500 to 700, are taken out from A's full length input features for modeling A2BC, composed of two copies of A, single copy of B and C, and with a total size of 1788 AAs. The domain modeling capability allows conveniently modeling parts of a large sequence, and also avoid possible errors caused by using a partial sequence to derive MSAs.
 
-A new symbol `+` is introduced in version 1.3.0. This plus sign separates individual chains like a slash `/`, but marks entities (can be made of multiple chains) between which the interface score will be calculated. For example, in A:2/B:2/C/D, the interface score (iScore) will be calculated on the full target. If there is a complex formed, e.g., A:2/B:2, it will give a high iScore regardless whether C or D interacts with A2:B2 or not. The plus sign is introduced such that one can evaluate iScore on specified combinations of chains. If we changed the target format to A:2/B:2+C/D, the iScore will be calculate only for interface between A2:/B:2 and C/D, as it treats A2:/B2 and C/D as two super entities. Please checkout [Example 3](./example/README.md#Example-3) and [a script for interface score calculation](./example/README.md#Interface-score-calculation).
+A new symbol `+` is introduced in version 1.3.0. This plus sign separates individual chains like a slash `/`, but marks entities (can be made of multiple chains) between which the interface score will be calculated. For example, in A:2/B:2/C/D, the interface score (iScore) will be calculated on the full target. If there is a complex formed, e.g., A:2/B:2, it will give a signficant iScore regardless whether C or D interacts with A2:B2 or not. The plus sign is introduced such that one can evaluate iScore on specified combinations of chains. If we changed the target format to A:2/B:2+C/D, the iScore will be calculate only for interface between A2:/B:2 and C/D, as it treats A2:/B2 and C/D as two super entities. Please checkout [Example 3](./example/README.md#Example-3) and [a script for interface score calculation](./example/README.md#Interface-score-calculation).
 
 ## MSA pairing mode
 In version 1.3 and above, we have introduced multiple choices for pairing MSAs of individual monomers of a target. With the exception of the unpaired mode, all other pairing modes requires species information of sequences in the MSA alignments. Such information is added via a modified data pipeline as explained [here](./example/README.md#Generating-input-features). The MSA pairing options are available when you choose either `monomer_ptm` or `multimer_np` as the model preset, and the options are:
@@ -97,6 +101,9 @@ In version 1.3 and above, we have introduced multiple choices for pairing MSAs o
 - `cyclic` Pairing the immediate neighbor monomers in your target like in a ring topology. This is useful for predicting ring structures which is quite commone. See [Example 4](./example/README.md#Example-4).
 - `linear` Similar to `cyclic` but without pairing the first and the last monomer
 - `custom` Arbitrary pairing, which may be useful for building very large complexes. This is a an experimental feature. You need to define an adjacency matrix as shown in [this example file](./example/H1072.adj).
+
+## Pairing top N sequences in species or organisms
+In version 1.4.1, we made available a new option to pair MSAs based on their species or organism information. This option can be used to prioritize orthologs or close homologs in MSA pairing and potentially reduces noise if the target has many paralogs. An example such usage is `--num_seq_per_species=1`, which keeps only one sequence for each species or organism that is the most similar to target sequences.
 
 
 ## Checkpoint

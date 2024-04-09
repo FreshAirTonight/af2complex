@@ -29,6 +29,9 @@ from alphafold.data import parsers
 from alphafold.data.tools import kalign
 import numpy as np
 
+# Mu: support reading compressed files
+from fileinput import hook_compressed
+
 # Internal import (7716).
 
 
@@ -449,6 +452,7 @@ def _get_atom_positions(
     mask = np.zeros([residue_constants.atom_type_num], dtype=np.float32)
     res_at_position = mmcif_object.seqres_to_structure[auth_chain_id][res_index]
     if not res_at_position.is_missing:
+      assert res_at_position.position is not None
       res = chain[(res_at_position.hetflag,
                    res_at_position.position.residue_number,
                    res_at_position.position.insertion_code)]
@@ -678,7 +682,11 @@ class SingleHitResult:
 
 @functools.lru_cache(16, typed=False)
 def _read_file(path):
-  with open(path, 'r') as f:
+  # Mu: try compressed files in gzip format
+  if not os.path.isfile(path):
+    path = path + '.gz'
+
+  with hook_compressed(path, 'rt') as f:
     file_data = f.read()
   return file_data
 
@@ -833,7 +841,8 @@ class TemplateHitFeaturizer(abc.ABC):
         * Any feature computation errors.
     """
     self._mmcif_dir = mmcif_dir
-    if not glob.glob(os.path.join(self._mmcif_dir, '*.cif')):
+    if ( not glob.glob(os.path.join(self._mmcif_dir, '*.cif')) and 
+      not glob.glob(os.path.join(self._mmcif_dir, '*.cif.gz')) ):
       logging.error('Could not find CIFs in %s', self._mmcif_dir)
       raise ValueError(f'Could not find CIFs in {self._mmcif_dir}')
 

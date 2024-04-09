@@ -127,7 +127,7 @@ class DataPipeline:
                uniref_max_hits: int = 20000,
                uniprot_max_hits: int = 20000,
                use_precomputed_msas: bool = False,
-               add_species: bool = False):
+               add_species: int = 0,):
     """Initializes the data pipeline."""
     self._use_small_bfd = use_small_bfd
     self.jackhmmer_uniref90_runner = jackhmmer.Jackhmmer(
@@ -185,7 +185,7 @@ class DataPipeline:
         use_precomputed_msas=self.use_precomputed_msas,
         max_sto_sequences=self.mgnify_max_hits)
 
-    if self.add_species: # uniprotkb has species information for each sequence
+    if self.add_species: # uniprotkb has species/organism information for each sequence
         uniprot_out_path = os.path.join(msa_output_dir, 'uniprot_hits.sto')
         jackhmmer_uniprot_result = run_msa_tool(
             msa_runner=self.uniprot_msa_runner,
@@ -217,8 +217,11 @@ class DataPipeline:
     uniref90_msa = parsers.parse_stockholm(jackhmmer_uniref90_result['sto'])
     mgnify_msa = parsers.parse_stockholm(jackhmmer_mgnify_result['sto'])
 
-    if self.add_species:
+    if self.add_species == 1:
         uniprot_msa = parsers.parse_stockholm(jackhmmer_uniprot_result['sto'])
+    elif self.add_species == 2:
+        # use organism Identifiers accodring to ncbi taxonomy id
+        uniprot_msa = parsers.parse_stockholm_ox(jackhmmer_uniprot_result['sto'])
 
     pdb_template_hits = self.template_searcher.get_template_hits(
         output_string=pdb_templates_result, input_sequence=input_sequence)

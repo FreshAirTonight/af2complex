@@ -101,7 +101,7 @@ class RunModel:
 
   def __init__(self,
                config: ml_collections.ConfigDict,
-               params: Optional[Mapping[str, Mapping[str, np.ndarray]]] = None,
+               params: Optional[Mapping[str, Mapping[str, jax.Array]]] = None,
                is_training=False):
     self.config = config
     self.params = params

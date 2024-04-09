@@ -7,7 +7,7 @@
 # 1) activate your conda environment for AlphaFold if you use conda
 # . load_alphafold
 # 2) change this to point to alphafold's deep learning model parameter directory
-DATA_DIR=$HOME/scratch/afold/data
+DATA_DIR=$IDEAS/af2c/data
 
 ### input targets
 target_lst_file=targets/example2.lst  # a list of target with stoichiometry

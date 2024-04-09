@@ -481,6 +481,7 @@ CONFIG = ml_collections.ConfigDict({
 CONFIG_MULTIMER = ml_collections.ConfigDict({
     'model': {
         'embeddings_and_evoformer': {
+            'use_multimeric_templates': False,
             'evoformer_num_block': 48,
             'evoformer': {
                 'msa_column_attention': {

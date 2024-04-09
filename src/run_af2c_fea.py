@@ -104,11 +104,12 @@ flags.DEFINE_enum('db_preset', 'reduced_dbs',
                   'smaller genetic database config (reduced_dbs) or '
                   'full genetic database config  (full_dbs) or '
                   'only uniprot database plus pdb (uniprot)')
-flags.DEFINE_enum('feature_mode', 'monomer',
-                  ['monomer', 'monomer+species', 'monomer+fullpdb', 'multimer'],
+flags.DEFINE_enum('feature_mode', 'monomer+organism+fullpdb',
+                  ['monomer', 'monomer+organism+fullpdb', 'monomer+species+fullpdb', 'multimer'],
                   'Choose the mode of output feature sets - for monomer prediction, '
-                  'monomer plus species ids (for customized pairing later), '
-                  'monomer using full pdb (instead of pdb70) plus species id, and '
+                  'monomer plus species ids (for customized msa pairing) and full pdb search for template, '
+                  'monomer plus organism ids (for customized msa pairing) '
+                  'and full pdb search for template, and '
                   'for multimer prediction using the default MSA pairing')
 flags.DEFINE_integer('random_seed', None, 'The random seed for the data '
                      'pipeline. By default, this is randomly generated. Note '
@@ -195,8 +196,14 @@ def main(argv):
                   should_be_set=(FLAGS.db_preset == 'full_dbs'))
 
   run_multimer_system = 'multimer' in FLAGS.feature_mode
-  add_species = any(x in FLAGS.feature_mode for x in ['species', 'fullpdb'])
-  print(f"add_species is {add_species}")
+
+  add_species = 0
+  if 'species' in FLAGS.feature_mode:
+    add_species = 1
+  elif 'organism' in FLAGS.feature_mode:
+    add_species = 2
+
+  print(f"add_species mode is {add_species}")
   _check_flag('pdb70_database_path', 'feature_mode',
               should_be_set=not (run_multimer_system
                 or 'fullpdb' in FLAGS.feature_mode))
@@ -204,7 +211,7 @@ def main(argv):
               should_be_set=(run_multimer_system
                         or 'fullpdb' in FLAGS.feature_mode))
   _check_flag('uniprot_database_path', 'feature_mode',
-         should_be_set=(run_multimer_system or add_species))
+         should_be_set=(run_multimer_system or bool(add_species)))
 
   # Check for duplicate FASTA file names.
   fasta_names = [pathlib.Path(p).stem for p in FLAGS.fasta_paths]

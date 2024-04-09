@@ -46,6 +46,7 @@ for term in chain_breaks:
 caxes = ax.matshow(cnt_prob, cmap=plt.get_cmap('viridis'))
 fig.colorbar(caxes)
 
-
-
+basename = os.path.splitext( pickle_file )[0]
+cnt_map_file = basename + '_cntmap.pdf'
+plt.savefig(cnt_map_file, transparent=True)
 plt.show()

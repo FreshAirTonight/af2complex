@@ -211,6 +211,33 @@ def load_monomer_feature(target: Dict, flags):
       L = len(mono_feature_dict["residue_index"])
       T = mono_feature_dict["template_all_atom_positions"].shape[0]
       print(f"Info: {target['name']} found monomer {seq_name} msa_depth = {N}, seq_len = {L}, num_templ = {T}")
+
+      seq_of_species = {}
+      remove_index = []
+      # for consider only orthologs in MSA pairing
+      if flags.num_seq_per_species and 'msa_species_identifiers' in mono_feature_dict:
+        print(f"Info: keeping up to {flags.num_seq_per_species} sequences per species")
+        for i in range(N):
+          species = mono_feature_dict['msa_species_identifiers'][i].decode('utf-8')
+          if species == '':
+            if flags.rm_unk_species_seq:
+              remove_index.append(i)
+            continue
+          
+          if species not in seq_of_species:
+            seq_of_species[species] = []
+          seq_of_species[species].append(i)
+        for species in seq_of_species:
+          #print(f"Info: {species} has {len(seq_of_species[species])} sequences")
+          if len(seq_of_species[species]) > flags.num_seq_per_species:
+            remove_index.extend(seq_of_species[species][flags.num_seq_per_species:])
+        mono_feature_dict["msa"] = np.delete(mono_feature_dict["msa"], remove_index, axis=0)
+        mono_feature_dict["deletion_matrix_int"] = np.delete(mono_feature_dict["deletion_matrix_int"], remove_index, axis=0)
+        mono_feature_dict['num_alignments'][:] = mono_feature_dict['num_alignments'] - np.array(remove_index).shape[0]
+        mono_feature_dict['msa_species_identifiers'] = np.delete(mono_feature_dict['msa_species_identifiers'], remove_index, axis=0)
+        N = len(mono_feature_dict["msa"])
+        print(f"Info: {seq_name} found {len(seq_of_species)} species, msa_depth after species filtering is {N}")
+
       if N > flags.max_mono_msa_depth:
           print(f"Info: {seq_name} MSA size is too large, reducing to {flags.max_mono_msa_depth}")
           mono_feature_dict["msa"] = mono_feature_dict["msa"][:flags.max_mono_msa_depth,:]
@@ -998,7 +1025,8 @@ def create_species_support(
       all_chain_species_dict.append(species_dict)
 
   common_species = sorted(common_species)
-  common_species.remove(b'')
+  if b'' in common_species:
+    common_species.remove(b'')
 
   return common_species, all_chain_species_dict, examples
 

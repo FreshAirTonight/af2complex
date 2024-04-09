@@ -1,4 +1,5 @@
 # Modified by Mu Gao to consider only UniProt as the sequence database
+# and use NCBI taxonomy ID to identify organism for MSA pairing.
 #
 # Copyright 2021 DeepMind Technologies Limited
 #
@@ -121,7 +122,7 @@ class DataPipeline:
                template_featurizer: templates.TemplateHitFeaturizer,
                uniprot_max_hits: int = 30000,
                use_precomputed_msas: bool = False,
-               add_species: bool = False):
+               add_species: int = 0):
     """Initializes the data pipeline."""
 
     self.template_searcher = template_searcher
@@ -160,7 +161,11 @@ class DataPipeline:
     msa_for_templates = parsers.remove_empty_columns_from_stockholm_msa(
         msa_for_templates)
 
-    uniprot_msa = parsers.parse_stockholm(jackhmmer_uniprot_result['sto'])
+    if self.add_species == 1:
+      uniprot_msa = parsers.parse_stockholm(jackhmmer_uniprot_result['sto'])
+    elif self.add_species == 2:
+      # use organism Identifiers accodring to ncbi taxonomy id
+      uniprot_msa = parsers.parse_stockholm_ox(jackhmmer_uniprot_result['sto'])
 
     if self.template_searcher.input_format == 'sto':
       pdb_templates_result = self.template_searcher.query(msa_for_templates)

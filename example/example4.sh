@@ -8,7 +8,7 @@
 # 1) activate your conda environment for AlphaFold if you use conda
 # . load_alphafold
 # 2) change this to point to alphafold's deep learning model parameter directory
-DATA_DIR=$HOME/scratch/afold/data
+DATA_DIR=$IDEAS/af2c/data
 
 ### input targets
 target_lst_file=targets/example4.lst  # a list of target with stoichiometry
@@ -63,4 +63,4 @@ python -u $af_dir/run_af2c_mod.py --target_lst_path=$target_lst_file \
   --save_recycled=$recycling_setting \
   --max_recycles=$max_recycles \
   --msa_pairing=$msa_pairing \
-  --checkpoint_tag=$checkpoint_tag \
+  --checkpoint_tag=$ckpt_tag \

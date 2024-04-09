@@ -97,8 +97,12 @@ def main(argv):
 
         # Relax the prediction.
         t_0 = time.time()
-        relaxed_pdb_str, log, _ = amber_relaxer.process(prot=unrelaxed_protein)
-        relaxed_pdb_str, _, violations = amber_relaxer.process(prot=unrelaxed_protein)
+        try:
+          relaxed_pdb_str, log, violations = amber_relaxer.process(prot=unrelaxed_protein)
+        except Exception as e:
+          logging.error(f"{target_name} relaxation failed, error: {e}")
+          continue
+
         relax_metrics[f'relaxed_{unrelaxed_pdb_file}'] = {
             'remaining_violations': violations,
             'remaining_violations_count': sum(violations)

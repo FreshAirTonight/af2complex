@@ -1,3 +1,5 @@
+# Modified by Mu Gao to parse NCBI taxonomy IDs of UniProt sequences
+#
 # Copyright 2021 DeepMind Technologies Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -153,6 +155,81 @@ def parse_stockholm(stockholm_string: str) -> Msa:
              deletion_matrix=deletion_matrix,
              descriptions=list(name_to_sequence.keys()))
 
+
+def parse_stockholm_ox(stockholm_string: str) -> Msa:
+  """Parses sequences and deletion matrix from stockholm format alignment.
+  Mu Gao: modified to parse OX number from UNIPROT sequences, use it as the species id
+  Args:
+    stockholm_string: The string contents of a stockholm file. The first
+      sequence in the file should be the query sequence.
+
+  Returns:
+    A tuple of:
+      * A list of sequences that have been aligned to the query. These
+        might contain duplicates.
+      * The deletion matrix for the alignment as a list of lists. The element
+        at `deletion_matrix[i][j]` is the number of residues deleted from
+        the aligned sequence i at residue position j.
+      * The names of the targets matched, including the jackhmmer subsequence
+        suffix.
+  """
+  name_to_sequence = collections.OrderedDict()
+  name_to_ox = collections.OrderedDict()
+  for line in stockholm_string.splitlines():
+    line = line.strip()
+    if not line or line.startswith('//'):
+      continue
+
+    if line.startswith('#'):
+      m = re.match(r'#=GS (\S+)\s+DE.*\sOX=(([0-9]){1,7})\s.*', line)
+      if m:
+        name = m.group(1)
+        ox = m.group(2)
+        name_to_ox[name] = ox
+    else:
+      name, sequence = line.split()
+
+      if name in name_to_ox:
+        ox = name_to_ox[name]
+        # UNIPROT Organism Identifiers, e.g., OX=9606 for human
+        name = re.sub('_[A-Za-z0-9]{1,7}/', '_' + ox + '/', name)
+
+      if name not in name_to_sequence:
+        name_to_sequence[name] = ''
+      name_to_sequence[name] += sequence
+      #print(name)
+
+  msa = []
+  deletion_matrix = []
+
+  query = ''
+  keep_columns = []
+  for seq_index, sequence in enumerate(name_to_sequence.values()):
+    if seq_index == 0:
+      # Gather the columns with gaps from the query
+      query = sequence
+      keep_columns = [i for i, res in enumerate(query) if res != '-']
+
+    # Remove the columns with gaps in the query from all sequences.
+    aligned_sequence = ''.join([sequence[c] for c in keep_columns])
+
+    msa.append(aligned_sequence)
+
+    # Count the number of deletions w.r.t. query.
+    deletion_vec = []
+    deletion_count = 0
+    for seq_res, query_res in zip(sequence, query):
+      if seq_res != '-' or query_res != '-':
+        if query_res == '-':
+          deletion_count += 1
+        else:
+          deletion_vec.append(deletion_count)
+          deletion_count = 0
+    deletion_matrix.append(deletion_vec)
+
+  return Msa(sequences=msa,
+             deletion_matrix=deletion_matrix,
+             descriptions=list(name_to_sequence.keys()))
 
 def parse_a3m(a3m_string: str) -> Msa:
   """Parses sequences and deletion matrix from a3m format alignment.

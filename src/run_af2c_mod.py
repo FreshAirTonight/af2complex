@@ -30,7 +30,7 @@ import random
 import sys
 import time
 import re
-from typing import Dict, Type
+from typing import Any, Dict, Type
 
 from absl import app
 from absl import flags
@@ -45,6 +45,7 @@ from alphafold.data import pipeline
 from alphafold.data.complex import *
 from datetime import date
 
+import jax.numpy as jnp
 import numpy as np
 # Internal import (7716).
 
@@ -116,10 +117,18 @@ flags.DEFINE_enum('msa_pairing', None,
 flags.DEFINE_boolean('do_cluster_analysis', False, 'Whether to print out clusters of protein chains in the prediction')
 flags.DEFINE_integer('cluster_edge_thres', 10, 'The number of contacts between chains that constitute an edge in the '
                   'cluster analysis', lower_bound=0)
-flags.DEFINE_float('pdb_iscore_cf', -1.0, 'If interface icore is present, only write the pdb of the structural model '
-                    'if the iScore is larger than this cutoff value. Useful for large-scale screening. ')
+flags.DEFINE_float('pdb_iscore_cf', -1.0, 'If interface score is present, only write the pdb of the structural model '
+                    'if the iScore value is larger than this cutoff value. Useful for reducing I/O in large-scale screening. ')
 flags.DEFINE_boolean('allow_dropout', False, 'Allow dropout during model inference. This is an experimental feature. '
                      'Default is disabled.')
+flags.DEFINE_boolean('use_multimeric_templates', False, 'Consider inter chain distance from a multimeric template. '
+                     'Make sure that the monomeric templates are from the same multimeric template. This is an experimental '
+                     'feature. Default is disabled.')
+flags.DEFINE_integer('num_seq_per_species', 0, 'How many sequences to use per species in building MSA features. '
+                     'If a species has more sequences in the monomer MSA, only top sequences up to this value will be used. '
+                     'If this is number is 1, likely only orthologs are considered. By default value 0, all sequences are used.'
+                     'This option may be used with rm_unk_species_seq to control MSAs pairing. ', lower_bound=0)
+flags.DEFINE_boolean('rm_unk_species_seq', False, 'Whether to remove sequences from unknown species in building MSA features. ')
 
 FLAGS = flags.FLAGS
 
@@ -159,6 +168,16 @@ def get_asymid2chain_name(target):
 ##################################################################################################
 
 ##################################################################################################
+def _jnp_to_np(output: Dict[str, Any]) -> Dict[str, Any]:
+  """Recursively changes jax arrays to numpy arrays."""
+  for k, v in output.items():
+    if isinstance(v, dict):
+      output[k] = _jnp_to_np(v)
+    elif isinstance(v, jnp.ndarray):
+      output[k] = np.array(v)
+  return output
+
+
 def predict_structure(
     target: Dict[str, str],
     model_runners: Dict[str, model.RunModel],
@@ -337,8 +356,9 @@ def predict_structure(
       # skip saving pkl if iScore less than the specified cutoff
       if ((recycle_index == tot_recycle and flags.output_pickle) or FLAGS.save_recycled == 3) and inter_sc > FLAGS.pdb_iscore_cf:
           result_output_path = os.path.join(out_dir, f'{log_model_name}.pkl')
+          np_result = _jnp_to_np(dict(result))  # Remove jax dependency from results
           with open(result_output_path, 'wb') as f:
-              pickle.dump(result, f, protocol=4)
+              pickle.dump(np_result, f, protocol=4)
 
       if (recycle_index == tot_recycle or FLAGS.save_recycled >= 2) and inter_sc > FLAGS.pdb_iscore_cf:
           # Set the b-factors to the per-residue plddt
@@ -482,6 +502,9 @@ def main(argv):
       if FLAGS.allow_dropout:
           print("Info: allow dropout for model inference")
           model_config.model.global_config.eval_dropout = True
+      if FLAGS.use_multimeric_templates:
+          print("Info: use inter-chain distances from multimeric templates")
+          model_config.model.embeddings_and_evoformer.use_multimeric_templates = True
 
       model_params = data.get_model_haiku_params(
           model_name=model_name, data_dir=FLAGS.data_dir)

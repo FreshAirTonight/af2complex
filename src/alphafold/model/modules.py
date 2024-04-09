@@ -36,6 +36,8 @@ import haiku as hk
 import jax
 import jax.numpy as jnp
 
+_SOFTMAX_MASK = -1e9
+
 
 def softmax_cross_entropy(logits, labels):
   """Computes softmax cross entropy given logits and one-hot class labels."""
@@ -607,14 +609,14 @@ class Attention(hk.Module):
     self.global_config = global_config
     self.output_dim = output_dim
 
-  def __call__(self, q_data, m_data, bias, nonbatched_bias=None):
+  def __call__(self, q_data, m_data, mask, nonbatched_bias=None):
     """Builds Attention module.
 
     Arguments:
       q_data: A tensor of queries, shape [batch_size, N_queries, q_channels].
       m_data: A tensor of memories from which the keys and values are
         projected, shape [batch_size, N_keys, m_channels].
-      bias: A bias for the attention, shape [batch_size, N_queries, N_keys].
+      mask: A mask for the attention, shape [batch_size, N_queries, N_keys].
       nonbatched_bias: Shared bias, shape [N_queries, N_keys].
 
     Returns:
@@ -645,10 +647,11 @@ class Attention(hk.Module):
     q = jnp.einsum('bqa,ahc->bqhc', q_data, q_weights) * key_dim**(-0.5)
     k = jnp.einsum('bka,ahc->bkhc', m_data, k_weights)
     v = jnp.einsum('bka,ahc->bkhc', m_data, v_weights)
-    logits = jnp.einsum('bqhc,bkhc->bhqk', q, k) + bias
+    logits = jnp.einsum('bqhc,bkhc->bhqk', q, k)
     if nonbatched_bias is not None:
       logits += jnp.expand_dims(nonbatched_bias, axis=0)
-    weights = jax.nn.softmax(logits)
+    logits = jnp.where(mask, logits, _SOFTMAX_MASK)
+    weights = utils.stable_softmax(logits)
     weighted_avg = jnp.einsum('bhqk,bkhc->bqhc', weights, v)
 
     if self.global_config.zero_init:
@@ -702,7 +705,7 @@ class GlobalAttention(hk.Module):
     self.global_config = global_config
     self.output_dim = output_dim
 
-  def __call__(self, q_data, m_data, q_mask, bias):
+  def __call__(self, q_data, m_data, q_mask):
     """Builds GlobalAttention module.
 
     Arguments:
@@ -713,7 +716,6 @@ class GlobalAttention(hk.Module):
       q_mask: A binary mask for q_data with zeros in the padded sequence
         elements and ones otherwise. Size [batch_size, N_queries, q_channels]
         (or broadcastable to this shape).
-      bias: A bias for the attention.
 
     Returns:
       A float32 tensor of size [batch_size, N_queries, output_dim].
@@ -746,9 +748,10 @@ class GlobalAttention(hk.Module):
 
     q = jnp.einsum('ba,ahc->bhc', q_avg, q_weights) * key_dim**(-0.5)
     k = jnp.einsum('bka,ac->bkc', m_data, k_weights)
-    bias = (1e9 * (q_mask[:, None, :, 0] - 1.))
-    logits = jnp.einsum('bhc,bkc->bhk', q, k) + bias
-    weights = jax.nn.softmax(logits)
+    bias = q_mask[:, None, :, 0]
+    logits = jnp.einsum('bhc,bkc->bhk', q, k)
+    logits = jnp.where(bias, logits, _SOFTMAX_MASK)
+    weights = utils.stable_softmax(logits)
     weighted_avg = jnp.einsum('bhk,bkc->bhc', weights, v)
 
     if self.global_config.zero_init:
@@ -821,8 +824,8 @@ class MSARowAttentionWithPairBias(hk.Module):
     assert len(msa_mask.shape) == 2
     assert c.orientation == 'per_row'
 
-    bias = (1e9 * (msa_mask - 1.))[:, None, None, :]
-    assert len(bias.shape) == 4
+    mask = msa_mask[:, None, None, :]
+    assert len(mask.shape) == 4
 
     msa_act = common_modules.LayerNorm(
         axis=[-1], create_scale=True, create_offset=True, name='query_norm')(
@@ -848,7 +851,7 @@ class MSARowAttentionWithPairBias(hk.Module):
     msa_act = mapping.inference_subbatch(
         attn_mod,
         self.global_config.subbatch_size,
-        batched_args=[msa_act, msa_act, bias],
+        batched_args=[msa_act, msa_act, mask],
         nonbatched_args=[nonbatched_bias],
         low_memory=not is_training)
 
@@ -889,8 +892,8 @@ class MSAColumnAttention(hk.Module):
     msa_act = jnp.swapaxes(msa_act, -2, -3)
     msa_mask = jnp.swapaxes(msa_mask, -1, -2)
 
-    bias = (1e9 * (msa_mask - 1.))[:, None, None, :]
-    assert len(bias.shape) == 4
+    mask = msa_mask[:, None, None, :]
+    assert len(mask.shape) == 4
 
     msa_act = common_modules.LayerNorm(
         axis=[-1], create_scale=True, create_offset=True, name='query_norm')(
@@ -901,7 +904,7 @@ class MSAColumnAttention(hk.Module):
     msa_act = mapping.inference_subbatch(
         attn_mod,
         self.global_config.subbatch_size,
-        batched_args=[msa_act, msa_act, bias],
+        batched_args=[msa_act, msa_act, mask],
         nonbatched_args=[],
         low_memory=not is_training)
 
@@ -944,9 +947,6 @@ class MSAColumnGlobalAttention(hk.Module):
     msa_act = jnp.swapaxes(msa_act, -2, -3)
     msa_mask = jnp.swapaxes(msa_mask, -1, -2)
 
-    bias = (1e9 * (msa_mask - 1.))[:, None, None, :]
-    assert len(bias.shape) == 4
-
     msa_act = common_modules.LayerNorm(
         axis=[-1], create_scale=True, create_offset=True, name='query_norm')(
             msa_act)
@@ -959,7 +959,7 @@ class MSAColumnGlobalAttention(hk.Module):
     msa_act = mapping.inference_subbatch(
         attn_mod,
         self.global_config.subbatch_size,
-        batched_args=[msa_act, msa_act, msa_mask, bias],
+        batched_args=[msa_act, msa_act, msa_mask],
         nonbatched_args=[],
         low_memory=not is_training)
 
@@ -1001,8 +1001,8 @@ class TriangleAttention(hk.Module):
       pair_act = jnp.swapaxes(pair_act, -2, -3)
       pair_mask = jnp.swapaxes(pair_mask, -1, -2)
 
-    bias = (1e9 * (pair_mask - 1.))[:, None, None, :]
-    assert len(bias.shape) == 4
+    mask = pair_mask[:, None, None, :]
+    assert len(mask.shape) == 4
 
     pair_act = common_modules.LayerNorm(
         axis=[-1], create_scale=True, create_offset=True, name='query_norm')(
@@ -1021,7 +1021,7 @@ class TriangleAttention(hk.Module):
     pair_act = mapping.inference_subbatch(
         attn_mod,
         self.global_config.subbatch_size,
-        batched_args=[pair_act, pair_act, bias],
+        batched_args=[pair_act, pair_act, mask],
         nonbatched_args=[nonbatched_bias],
         low_memory=not is_training)
 
@@ -2231,11 +2231,11 @@ class TemplateEmbedding(hk.Module):
         jnp.transpose(template_pair_representation, [1, 2, 0, 3]),
         [num_res * num_res, num_templates, num_channels])
 
-    bias = (1e9 * (template_mask[None, None, None, :] - 1.))
+    mask = template_mask[None, None, None, :]
 
     template_pointwise_attention_module = Attention(
         self.config.attention, self.global_config, query_num_channels)
-    nonbatched_args = [bias]
+    nonbatched_args = [mask]
     batched_args = [flat_query, flat_templates]
 
     embedding = mapping.inference_subbatch(

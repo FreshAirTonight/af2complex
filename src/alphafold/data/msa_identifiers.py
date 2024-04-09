@@ -38,7 +38,8 @@ _UNIPROT_PATTERN = re.compile(
     (?:[A-Za-z0-9]+)
     _
     # A mnemonic species identification code.
-    (?P<SpeciesIdentifier>([A-Za-z0-9]){1,5})
+    ## Mu Gao: increase from up to 5 digits to 7 digits, could be an NCBI taxon id
+    (?P<SpeciesIdentifier>([A-Za-z0-9]){1,7})
     # Small BFD uses a final value after an underscore, which we ignore.
     (?:_\d+)?
     $
